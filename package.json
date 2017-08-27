@@ -1,0 +1,19 @@
+{
+  "name": "scouting",
+  "version": "1.1.1",
+  "description": "team 1540 scouting",
+  "main": "scouting.js",
+  "scripts": {
+    "start": "node scouting.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tristan Peng",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^4.0.0-alpha.6",
+    "chartjs": "^0.3.24",
+    "dialogs": "^1.1.20",
+    "jquery": "^3.2.1",
+    "nouislider": "^10.1.0"
+  }
+}
