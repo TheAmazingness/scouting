@@ -129,7 +129,7 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
 ```
 
 ## Changelog
-### 1.2.0 (2017)
+### 1.2.0 (2017-08-27)
 * Added: Short answer (input).
 * Added: Dialogs (from [Dialogs](https://www.npmjs.com/package/dialogs), so no need to separately `npm install`).
 * Added: Scout number in the infobar after login.
