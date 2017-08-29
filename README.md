@@ -32,15 +32,6 @@ Then in your .js file:
     'jsonkey'
   );
 ```
-### Dialogs:
-Simplified from [Dialogs](https://www.npmjs.com/package/dialogs)
-```javascript
-  scout.dialogs
-    'type', // alert, prompt, confirm, cancel
-    'Title',
-    'Placeholder' // for prompts only
-  );
-```
 ### Input:
 ```javascript
   scout.input(
@@ -62,6 +53,22 @@ Simplified from [Dialogs](https://www.npmjs.com/package/dialogs)
     ],
     'jsonkey'
   );
+```
+### Noty:
+Simplified from [Noty](https://www.npmjs.com/package/noty)
+```javascript
+  scout.noty(
+    // Takes one argument, see Noty documentation (https://ned.im/noty/).
+  );
+```
+#### Note:
+To make [Noty](https://www.npmjs.com/package/noty) work, put this in the `<head>`:
+```html
+  <link rel="stylesheet" href="node_modules/noty/libs/noty.css">
+```
+And also put this before your `.js` file:
+```html
+  <script src="node_modules/noty/lib/noty.js"></script>
 ```
 ### Pie:
 Simplified from [Chart.js](https://www.npmjs.com/package/chartjs)
@@ -120,15 +127,18 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
     [6, 6] // Uses the Bootstrap grid system. Numbers must add up to twelve.
   );
 ```
-### Save (Deprecated):
-```javascript
-  scout.save(
-    '.place-to-put',
-    false // Optional: false does not replaces next button, default true
-  );
-```
 
 ## Changelog
+
+### 1.2.1 (2017)
+* Added: [Noty](https://www.npmjs.com/package/noty) as a dependency for notifications.
+* Added: `scout.noty();` so no need to `npm install noty`.
+* Fixed: First page not showing.
+* Fixed: Throwing error when team was undefined. Alerts instead.
+* Removed: [Dialogs](https://www.npmjs.com/package/dialogs).
+* Removed: `scout.dialogs();`.
+* Removed: `scout.save();`. Use `scout.done();` instead.
+
 ### 1.2.0 (2017-08-27)
 * Added: Short answer (input).
 * Added: Dialogs (from [Dialogs](https://www.npmjs.com/package/dialogs), so no need to separately `npm install`).
@@ -159,5 +169,5 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
 ### 2.0.0
 * Added: Database to keep track of scouts using `scout.database()`.
 
-## Created by Tristan Peng
+## Created by Tristan (theamazingness)
 ## Maintained by the Non-Robot Software Department of [Team 1540 The Flaming Chickens](http://www.team1540.org)

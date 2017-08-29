@@ -2,8 +2,7 @@ var $ = require('jquery');
 var chartjs = require('chartjs');
 var noUiSlider = require('nouislider');
 var fs = require('fs-extra');
-var Dialogs = require('dialogs');
-var dialogs = Dialogs(opts = {});
+var Noty = require('noty');
 // *****************************************************************************
 var count = 0;
 var json = {};
@@ -69,24 +68,6 @@ exports.counter = function (a, b, c, d) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.dialogs = function (a, b, c) {
-  switch (a) {
-    case 'alert':
-      dialogs.alert(b);
-      break;
-    case 'prompt':
-      dialogs.prompt(b, c);
-      break;
-    case 'confirm':
-      dialogs.confirm(b);
-      break;
-    case 'cancel':
-      dialogs.cancel();
-      break;
-    default:
-      throw new Error('Dialog type not defined');
-  }
-};
 exports.input = function (a, b, c, d) {
   if (init) {
     count++;
@@ -120,6 +101,9 @@ exports.multipleChoice = function (a, b, c, d) {
   } else {
     throw new Error('scout.init() not instantiated');
   }
+};
+exports.noty = function (a) {
+  return new Noty(a).show();
 };
 exports.pie = function (a, b, c, d) {
   if (init) {
@@ -211,7 +195,6 @@ exports.textarea = function (a, b, c, d) {
 };
 // *****************************************************************************
 // Other functions:
-// DEPRECATED
 exports.done = function (a, b) {
   if (init) {
     count++;
@@ -259,12 +242,20 @@ exports.init = function (a) {
       if (fs.existsSync('./scouting/schedule.json')) {
         schedule = JSON.parse(fs.readFileSync('./scouting/schedule.json', 'utf-8'));
       } else {
-        dialogs.alert('No schedule.');
+        new Noty({
+          text: 'No schedule',
+          type: 'warning',
+          layout: 'center'
+        }).show();
       }
       if (fs.existsSync('./scouting/scouts.json')) {
         scouts = JSON.parse(fs.readFileSync('./scouting/scouts.json', 'utf-8'));
       } else {
-        dialogs.alert('No scouts.');
+        new Noty({
+          text: 'No scouts',
+          type: 'warning',
+          layout: 'center'
+        }).show();
       }
       if (fs.existsSync('./scouting/role.txt')) {
         role = fs.readFileSync('./scouting/role.txt', 'utf-8');
@@ -304,7 +295,7 @@ exports.init = function (a) {
           rolePos = 5;
           break;
       }
-      team = schedule[match][rolePos];
+      team = schedule[match][rolePos] != undefined ? schedule[match][rolePos] : 'No team.';
       $('body').append(
         `<nav class="navbar fixed-bottom matchinfo">
           <div class="row">
@@ -336,7 +327,11 @@ exports.init = function (a) {
       if (fs.existsSync('./scouting/scouts.json')) {
         scouts = JSON.parse(fs.readFileSync('./scouting/scouts.json', 'utf-8'));
       } else {
-        dialogs.alert('No scouts.');
+        new Noty({
+          text: 'No scouts',
+          type: 'warning',
+          layout: 'center'
+        }).show();
       }
       init = true;
     } else {
@@ -443,28 +438,6 @@ exports.page = function (a, b) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.save = function (a, b) {
-  count++;
-  match++;
-  if (arguments.length == 1 && b == undefined) {
-    b = true;
-  }
-  if (b) {
-    $('.btn-' + $('.body-div-' + a.substr(1)).attr('class').substr(19) + '-next')
-      .replaceWith(`<button class="btn btn-outline-success save-` + count + `">Save</button>`)
-      .removeClass('.btn-' + $('.body-div-' + a.substr(1)).attr('class').substr(19) + '-next')
-      .show();
-  } else {
-    $(a).append(
-      `<button class="btn btn-outline-success save-` + count + `">Save</button>`
-    );
-  }
-  $('.save-' + count).click(function () {
-    fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
-    fs.writeFileSync('./scouting/match.txt', match);
-    window.location.reload();
-  });
-};
 // *****************************************************************************
 $(document).ready(function () {
 // *****************************************************************************
@@ -543,6 +516,7 @@ $(document).ready(function () {
     window.location.reload();
   });
 // *****************************************************************************
+  $('.' + pages[0]).show();
   $('.page-pane').each(function () {
     if ($(this).attr('class').substr(10) == pages[0]) {
       $('.btn-' + $(this).attr('class').substr(19) + '-back').remove();
