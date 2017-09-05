@@ -18,6 +18,11 @@ var team;
 var schedule;
 var init = false;
 var initCount = 0;
+var loginCount = 0;
+// *****************************************************************************
+function save() {
+  fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
+}
 // *****************************************************************************
 // Question Types:
 exports.checkbox = function (a, b, c, d) {
@@ -103,7 +108,7 @@ exports.multipleChoice = function (a, b, c, d) {
   }
 };
 exports.noty = function (a) {
-  return new Noty(a).show();
+  return new Noty(a);
 };
 exports.pie = function (a, b, c, d) {
   if (init) {
@@ -172,7 +177,7 @@ exports.slider = function (a, b, c, d, e) {
     slider.noUiSlider.on('end', function () {
       var value = slider.noUiSlider.get();
       eval('json.' + e + ' = [' + value + ']');
-      fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
+      save();
     });
   } else {
     throw new Error('scout.init() not instantiated');
@@ -213,7 +218,7 @@ exports.done = function (a, b) {
       );
     }
     $('.save-' + count).click(function () {
-      fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
+      save();
       fs.writeFileSync('./scouting/match.txt', match);
       window.location.reload();
     });
@@ -232,6 +237,9 @@ exports.init = function (a) {
     if (!fs.existsSync(dataDir)){
       fs.mkdirSync(dataDir);
     }
+    if (!fs.existsSync('./scouting/progress.json')) {
+      fs.writeFileSync('./scouting/progress.json');
+    }
     if (a == 'stand') {
       if (fs.existsSync('./scouting/match.txt')) {
         match = fs.readFileSync('./scouting/match.txt', 'utf-8');
@@ -244,8 +252,7 @@ exports.init = function (a) {
       } else {
         new Noty({
           text: 'No schedule',
-          type: 'warning',
-          layout: 'center'
+          type: 'warning'
         }).show();
       }
       if (fs.existsSync('./scouting/scouts.json')) {
@@ -253,8 +260,7 @@ exports.init = function (a) {
       } else {
         new Noty({
           text: 'No scouts',
-          type: 'warning',
-          layout: 'center'
+          type: 'warning'
         }).show();
       }
       if (fs.existsSync('./scouting/role.txt')) {
@@ -295,22 +301,23 @@ exports.init = function (a) {
           rolePos = 5;
           break;
       }
-      team = schedule[match][rolePos] != undefined ? schedule[match][rolePos] : 'No team.';
+      team = schedule[match][rolePos];
       $('body').append(
         `<nav class="navbar fixed-bottom matchinfo">
           <div class="row">
             <div class="col-sm-4 d-table info-panel">
               <h3 style="display: table-cell; vertical-align: middle;">
-                Role: <span style="color: ` + roleColor + `;">` + roleName + `</span>
+                Role: <span class="role-name" style="color: ` + roleColor + `;">` + roleName + `</span>
                 <br>
                 <br>
-                Team: <span style="color: ` + roleColor + `;">` + team + `</span>
+                Team: <span class="role-team" style="color: ` + roleColor + `;">` + team + `</span>
                 <br>
                 <br>
                 <span class="scout-num"></span>
+                <button class="btn btn-outline-warning edit-scout" style="display: none; margin-left: 5vw;">Edit Scout Number</button>
               </h3>
             </div>
-            <div class="col-sm-4 info-panel">
+            <div class="col-sm-4 info-panel matchnum-wrap">
               <h3>Match Number:</h3>
               <br>
               <input class="form-control matchnum" type="number" value="` + parseInt(match) + `" style="text-align: center; font-size: 24pt;">
@@ -329,8 +336,7 @@ exports.init = function (a) {
       } else {
         new Noty({
           text: 'No scouts',
-          type: 'warning',
-          layout: 'center'
+          type: 'warning'
         }).show();
       }
       init = true;
@@ -386,15 +392,27 @@ exports.login = function (a) {
     $('.ls-' + count).click(function () {
       var act = $('.l-' + num).val()
       if (scouts.hasOwnProperty(act)) {
-        $('.l-greeting')
-          .append(scouts[act] + '!')
-          .fadeIn();
-        json.scout = scouts[act];
-        fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
-        $('.btn-next, .btn-back').show();
-        $('.scout-num').append('Scout: ' + scouts[act]);
+        loginCount++;
+        if (loginCount == 1) {
+          $('.l-greeting')
+            .append(scouts[act] + '!')
+            .fadeIn();
+          json.scout = act;
+          save();
+          $('.btn-next, .btn-back').show();
+          $('.scout-num').append(
+            `Scout: <input class="num-change" style="border: none;" value="` + scouts[act] + `">
+            <br>
+            <br>`
+          );
+        }
       } else if (act == 1540) {
         $('.role').fadeIn();
+      } else {
+        new Noty({
+          text: 'No scout at this number',
+          type: 'error'
+        }).show();
       }
     });
   } else {
@@ -453,19 +471,19 @@ $(document).ready(function () {
       cArr.splice(index, 1);
     }
     eval('json.' + name + ' = [' + cArr + ']');
-    fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
+    save();
   });
   $('.scout-co').click(function () {
     var name = $(this).attr('data-key');
     var value = $('.' + $(this).attr('data-key') + '-co').val();
     eval('json.' + name + ' = ' + value);
-    fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
+    save();
   });
   $('.scout-i').keyup(function () {
     var name = $(this).attr('data-key');
     var value = $(this).val();
     eval('json.' + name + ' = "' + value + '"');
-    fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
+    save();
   });
   $('.scout-mc').click(function () {
     var name = $(this).attr('data-key');
@@ -473,13 +491,13 @@ $(document).ready(function () {
     typeof value == 'string' && value != 'true' && value != 'false' ?
       eval('json.' + name + ' = "' + value + '"') :
       eval('json.' + name + ' = ' + value);
-    fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
+    save();
   });
   $('.scout-t').keyup(function () {
     var name = $(this).attr('data-key');
     var value = $(this).val();
     eval('json.' + name + ' = "' + value + '"');
-    fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
+    save();
   });
 // *****************************************************************************
   $('.btn-back').click(function () {
@@ -504,10 +522,15 @@ $(document).ready(function () {
   $('.edit-matchnum').click(function () {
     fs.writeFileSync('./scouting/match.txt', $('.matchnum').val());
     $('.matchnum').val(fs.readFileSync('./scouting/match.txt', 'utf-8'));
-    $(this).fadeOut();
+    $(this).fadeOut(function () {
+      $('.matchnum-wrap').css('margin-top', 'auto');
+    });
+    match = $('.matchnum').val();
+    $('.role-team').text(schedule[match][rolePos]);
   });
-  $('.matchnum').keyup(function () {
+  $('.matchnum').focus(function () {
     $('.edit-matchnum').fadeIn(1000);
+    $('.matchnum-wrap').css('margin-top', '-5vh');
   });
 // *****************************************************************************
   $('.role-submit').click(function () {
@@ -524,6 +547,23 @@ $(document).ready(function () {
     }
     if ($(this).attr('class').substr(10) == pages[pages.length - 1]) {
       $('.btn-' + $(this).attr('class').substr(19) + '-next').remove();
+    }
+  });
+// *****************************************************************************
+  $('.scout-num').click(function () {
+    $('.num-change').val(json.scout);
+    $('.edit-scout').show();
+  });
+  $('.edit-scout').click(function () {
+    if (scouts[$('.num-change').val()] != undefined) {
+      json.scout = $('.num-change').val();
+      $('.num-change').val(scouts[$('.num-change').val()]);
+      $(this).hide();
+    } else {
+      new Noty({
+        text: 'No scout at this number',
+        type: 'error'
+      }).show();
     }
   });
 });

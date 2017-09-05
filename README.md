@@ -7,6 +7,14 @@ Then in your .js file:
   var scout = require('scouting');
   scout.init('stand'); // 'stand' for stand scouting and 'pit' for pit scouting
 ```
+Then put this in the `<head>`:
+```html
+  <link rel="stylesheet" href="node_modules/scouting/node_modules/noty/libs/noty.css">
+```
+And this:
+```html
+  <script src="node_modules/scouting/node_modules/noty/lib/noty.js"></script>
+```
 
 ## Question Types:
 ### Checkboxes:
@@ -64,11 +72,11 @@ Simplified from [Noty](https://www.npmjs.com/package/noty)
 #### Note:
 To make [Noty](https://www.npmjs.com/package/noty) work, put this in the `<head>`:
 ```html
-  <link rel="stylesheet" href="node_modules/noty/libs/noty.css">
+  <link rel="stylesheet" href="node_modules/scouting/node_modules/noty/libs/noty.css">
 ```
 And also put this before your `.js` file:
 ```html
-  <script src="node_modules/noty/lib/noty.js"></script>
+  <script src="node_modules/scouting/node_modules/noty/lib/noty.js"></script>
 ```
 ### Pie:
 Simplified from [Chart.js](https://www.npmjs.com/package/chartjs)
@@ -129,12 +137,16 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
 ```
 
 ## Changelog
+### 1.2.2 (2017-09-05)
+* Added: Change scout id by clicking on the scout name in the infobar.
+* Fixed: Autosave progress if app crash.
+* Fixed: Change match number button not showing.
+* Fixed: Team number did not reflect match number change when using input to change match number.
 
-### 1.2.1 (2017)
+### 1.2.1 (2017-08-29)
 * Added: [Noty](https://www.npmjs.com/package/noty) as a dependency for notifications.
 * Added: `scout.noty();` so no need to `npm install noty`.
 * Fixed: First page not showing.
-* Fixed: Throwing error when team was undefined. Alerts instead.
 * Removed: [Dialogs](https://www.npmjs.com/package/dialogs).
 * Removed: `scout.dialogs();`.
 * Removed: `scout.save();`. Use `scout.done();` instead.
