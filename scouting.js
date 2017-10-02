@@ -3,6 +3,7 @@ var chartjs = require('chartjs');
 var noUiSlider = require('nouislider');
 var fs = require('fs-extra');
 var Noty = require('noty');
+var exec = require('child_process').execSync;
 // *****************************************************************************
 var count = 0;
 var json = {};
@@ -19,9 +20,300 @@ var schedule;
 var init = false;
 var initCount = 0;
 var loginCount = 0;
+var isStand;
+var pitTeam;
+var pitConfirm;
+var manifest;
+var manifestPit = []
+var manifestStand = []
+var matchSchedule = {}
+var exemptionReq = 20;
+var pitValue = 0.5;
+var scoutList = [];
+var teams;
 // *****************************************************************************
 function save() {
-  fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
+  manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
+  if (isStand) {
+    fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
+    manifest.push('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json');
+  } else {
+    fs.writeFileSync('./data/' + json.team + '.json', JSON.stringify(json));
+    manifest.push(json.team + '.json');
+  }
+  fs.writeFileSync('./data/manifest.json', JSON.stringify(manifest));
+};
+function pitTeamEL() {
+  $('.pit-team-number').keyup(function () {
+    json.team = $(this).val();
+    if (event.which == 13) {
+      if (fs.existsSync('data/' + json.team + '.json')) {
+        pitTeam.close();
+        pitConfirm = new Noty({
+          text: 'Team ' + json.team + ' has already been pit scouted. Continuing will overwrite the file. Continue?',
+          layout: 'center',
+          type: 'warning',
+          buttons: [
+            Noty.button('Continue', 'btn btn-outline-danger', function () {
+              pitConfirm.close();
+              save();
+              $('.page-pane').show();
+            }, {id: 'pit-btn-cont'}),
+            Noty.button('Go Back', 'btn btn-outline-success', function () {
+              pitConfirm.close();
+              pitTeam.show();
+              pitTeamEL();
+            }, {id: 'pit-btn-back'})
+          ]
+        }).show();
+        $('#pit-btn-cont').css('margin-right', '5%');
+      } else {
+        pitTeam.close();
+        save();
+        $('.page-pane').show();
+      }
+    }
+  });
+};
+function contains(a, obj) {
+	var i = a.length;
+	while (i--) {
+		if (a[i] === obj) {
+			return true;
+		}
+	}
+	return false;
+}
+function Scout(name,id) {
+	this.name = name;
+	this.id = id;
+	this.req = 20;
+	this.pit = 0;
+	this.stand = 0;
+	this.total = 0;
+	this.exempt = false;
+}
+function importScouts() {
+	var file = JSON.parse(fs.readFileSync('data-collect/scouts.json'));
+	var keys = Object.keys(file);
+	for (x in keys) {
+		scoutList.push(new Scout(file[keys[x]],keys[x]));
+	}
+}
+function importSchedule() {
+	matchSchedule = JSON.parse(fs.readFileSync('data-collect/schedule.json'));
+}
+function setExemptions() {
+	var file = JSON.parse(fs.readFileSync('data-collect/exempt.json'));
+	for (x in scoutList) {
+		if (contains(Object.keys(file),scoutList[x].id)) {
+			scoutList[x].req = file[scoutList[x].id];
+		} else {
+			scoutList[x].req = exemptionReq;
+		}
+		if (scoutList[x].req == 0) {
+			scoutList[x].exempt = true;
+		}
+	}
+}
+function importPitManifest() {
+	if (fs.existsSync('data-collect/pit-scouting/manifest.json')) {
+		manifestPit = JSON.parse(fs.readFileSync('data-collect/pit-scouting/manifest.json'));
+	} else {
+    new Noty({
+      text: 'No manifest.json file for pit scouting',
+      type: 'error'
+    }).show();
+	}
+}
+function importStandManifest() {
+	if (fs.existsSync('data-collect/stand-scouting/manifest.json')) {
+		manifestStand = JSON.parse(fs.readFileSync('data-collect/stand-scouting/manifest.json'));
+	} else {
+    new Noty({
+      text: 'No manifest.json file for stand scouting',
+      type: 'error'
+    }).show();
+	}
+}
+function importPit() {
+	if (fs.existsSync('/Volumes/1540/companal/pit-scouting/manifest.json')) {
+		var manifest = JSON.parse(fs.readFileSync('/Volumes/1540/companal/pit-scouting/manifest.json'));
+		for (var team in manifest) {
+			if (!fs.existsSync('data-collect/pit-scouting/' + manifest[team]) && fs.existsSync('/Volumes/1540/companal/pit-scouting/' + manifest[team])) {
+				var dataJSON = fs.readFileSync('/Volumes/1540/companal/pit-scouting/' + manifest[team]);
+				var data = JSON.parse(dataJSON);
+				scoutOne = findScout(data.scoutIds[0]);
+				addToTotal(scoutOne.id, 'pit');
+				scoutTwo = findScout(data.scoutIds[1]);
+				if (scoutTwo!=null) {
+					addToTotal(scoutTwo.id, 'pit');
+				}
+				manifestPit.push(manifest[team]);
+				fs.writeFileSync('data-collect/pit-scouting/manifest.json',JSON.stringify(manifestPit));
+				fs.writeFileSync('data-collect/pit-scouting/' + manifest[team],dataJSON);
+			}
+		}
+		new Noty({
+			text: 'Done importing data!',
+			type: 'success'
+		}).show();
+	} else {
+		new Noty({
+			text: 'There is no flashdrive at /Volumes/1540/.',
+			type: 'error'
+		}).show();
+	}
+}
+function importStand() {
+ 	if (fs.existsSync('/Volumes/1540/companal/stand-scouting/manifest.json')) {
+ 		var manifest = JSON.parse(fs.readFileSync('/Volumes/1540/companal/stand-scouting/manifest.json'));
+		for (var team in manifest) {
+			if (!fs.existsSync('data-collect/stand-scouting/' + manifest[team]) && fs.existsSync('/Volumes/1540/companal/stand-scouting/' + manifest[team])) {
+				var dataJSON = fs.readFileSync('/Volumes/1540/companal/stand-scouting/' + manifest[team]);
+				var data = JSON.parse(dataJSON);
+				$('#m' + data.matchNumber + data.role).css('background-color', 'blue');
+				$('#m' + data.matchNumber + data.role).css('color', 'white');
+				$('#m' + data.matchNumber + data.role).text(findScout(data.scoutId).name);
+				addToTotal(data.scoutId,' stand');
+				manifestStand.push(manifest[team]);
+				fs.writeFileSync('data-collect/stand-scouting/manifest.json', JSON.stringify(manifestStand));
+				fs.writeFileSync('data-collect/stand-scouting/' + manifest[team],dataJSON);
+			}
+		}
+		new Noty({
+			text: 'Done importing data!',
+			type: 'success'
+		}).show();
+ 	} else {
+		new Noty({
+			text: 'There is no flashdrive at /Volumes/1540/.',
+			type: 'error'
+		}).show();
+ 	}
+}
+function exportData() {
+	if (fs.existsSync('/Volumes/1540/companal/output')) {
+		fs.copySync('data-collect/stand-scouting/', '/Volumes/1540/companal/output/stand-scouting/');
+		fs.copySync('data-collect/pit-scouting/', '/Volumes/1540/companal/output/pit-scouting/');
+	} else {
+		new Noty({
+			text: 'Cannot find flashdrive at /Volumes/1540/.',
+			type: 'error'
+		}).show();
+	}
+}
+function findScout(id) {
+	for (x in scoutList) {
+		if (scoutList[x].id == id) {
+			return scoutList[x];
+		}
+	}
+	return null;
+}
+function resetTables() {
+	$('#members').hide();
+	$('#matches').hide();
+	$('#teams').hide();
+	$('#schedule').hide();
+	$('.members').removeClass('act');
+	$('.teams').removeClass('act');
+	$('.matches').removeClass('act');
+	$('.schedule').removeClass('act');
+}
+function createTables(a) {
+	// Members Table
+	for (x in scoutList) {
+		var id = scoutList[x].id;
+		var rs = '#' + id + 'row';
+		var scout = scoutList[x];
+		$('#tbody').append('<tr id="' + id + 'row"></tr>');
+		if (scout.total < scout.req) {
+			$(rs).append('<td id="' + id + 'req">' + (scout.req - scout.total) + ' more matches</td>');
+		} else {
+			$(rs).append('<td id="' + id + 'req"> style="background-color:#F5FFBF">Completed</td>');
+		}
+		$(rs).append('<td id="' + id + 'id">' + id + '</td>');
+		$(rs).append('<td id="' + id + 'name">' + scout.name + '</td>');
+		$(rs).append('<td id="' + id + 'num">' + scout.pit + '</td>');
+		$(rs).append('<td id="' + id + 'num2">' + scout.stand + '</td>');
+		$(rs).append('<td id="' + id + 'num3">' + scout.total + '</td>');
+	}
+	// Teams Table
+  teams = exec('curl -X GET "https://www.thebluealliance.com/api/v3/event/' + a + '/teams/simple" -H "accept: application/json" -H "X-TBA-Auth-Key: p2nxGJxqkJo5a8clThWbi1ZNQhy8CaKlJd4YM5TOFgbR4d7y4KLFU1RWhLANpM8N"', {encoding: 'utf-8'});
+	for (x in teams) {
+		var team = teams[x];
+		var tr = document.createElement('tr');
+		tr.setAttribute('id','r' + team + 'row');
+		$('#robotBody').append(tr);
+		var name = document.createElement('td');
+		name.setAttribute('id','r' + team + 'bot');
+		$('#r' + team + 'row').append(name);
+		$('#r' + team + 'bot').text(team);
+		var aname = document.createElement('td');
+		aname.setAttribute('id','r' + team + 'nm');
+		$('#r' + team + 'row').append(aname);
+		$('#r' + team + 'nm').text(teams_names[x]);
+		var pit = document.createElement('td');
+		pit.setAttribute('id','r' + team + 'pit');
+		$('#r' + team + 'row').append(pit);
+		$('#r' + team + 'pit').text('False');
+		$('#r' + team + 'pit').css('background-color','#ffdad1');
+		var stand = document.createElement('td');
+		stand.setAttribute('id','r' + team + 'stand');
+		$('#r' + team + 'row').append(stand);
+		$('#r' + team + 'stand').text('0');
+	}
+	// Match Table
+	for (match = 1; match <= Object.keys(matchSchedule).length; match++) {
+		var rs = '#m' + match + 'row';
+		$('#matchBody').append('<tr id="m' + match + 'row"></tr>');
+		$(rs).append('<td id="m' + match + 'num">' + match + '</td>');
+		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r1">False</td>');
+		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r2">False</td>');
+		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r3">False</td>');
+		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b1">False</td>');
+		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b2">False</td>');
+		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b3">False</td>');
+	}
+	// Schedule Table
+	for (match = 1; match < Object.keys(matchSchedule).length + 1; match++) {
+		var rs = '#s' + match + 'row';
+		$('#scheduleBody').append('<tr id="s' + match + 'row"></tr>');
+ 		$(rs).append('<td id="s' + match + 'title">' + match + '</td>');
+		for (x = 0; x < 6; x++) {
+			$(rs).append('<td style="width:15%" id="s' + match + x + 'spot">' + matchSchedule[match][x] + '</td>');
+			if (parseInt(matchSchedule[match][x]) == 1540) {
+				$('#s' + match + x + 'spot').css('background-color','#B6FF9E');
+			}
+		}
+	}
+}
+function addToTotal(id, type) {
+	scout = findScout(id);
+	if (type == 'pit') {
+		scout.pit += 1;
+		scout.total += pitValue;
+		$('#' + id + 'num').text(scout.pit);
+	} else {
+		scout.stand += 1;
+		scout.total += 1;
+		$('#' + id + 'num1').text(scout.stand);
+	}
+	$('#' + id + 'num2').text(scout.total);
+	if (!scout.exempt && scout.total >= scout.req) {
+		scout.exempt=true;
+		$('#' + scout.id + 'req').text('Completed');
+		$('#' + scout.id + 'req').css('background-color','#F5FFBF');
+	} else if (!scout.exempt) {
+		$('#' + scout.id + 'req').text(scout.req - scout.total + ' more matches');
+	}
+}
+function pitWeight(pw) {
+	pitValue = pw;
+}
+function requirement(req) {
+	exemptionReq = req;
 }
 // *****************************************************************************
 // Question Types:
@@ -229,18 +521,21 @@ exports.done = function (a, b) {
 exports.init = function (a) {
   initCount++;
   if (initCount == 1) {
-    var scoutDir = './scouting';
-    var dataDir = './data';
-    if (!fs.existsSync(scoutDir)){
-      fs.mkdirSync(scoutDir);
-    }
-    if (!fs.existsSync(dataDir)){
-      fs.mkdirSync(dataDir);
-    }
-    if (!fs.existsSync('./scouting/progress.json')) {
-      fs.writeFileSync('./scouting/progress.json');
+    if (a == 'stand' || 'pit') {
+      var scoutDir = './scouting';
+      var dataDir = './data';
+      if (!fs.existsSync(scoutDir)){
+        fs.mkdirSync(scoutDir);
+      }
+      if (!fs.existsSync(dataDir)){
+        fs.mkdirSync(dataDir);
+      }
+      if (!fs.existsSync('./data/manifest.json')) {
+        fs.writeFileSync('./data/manifest.json', '[]');
+      }
     }
     if (a == 'stand') {
+      isStand = true;
       if (fs.existsSync('./scouting/match.txt')) {
         match = fs.readFileSync('./scouting/match.txt', 'utf-8');
       } else {
@@ -331,6 +626,7 @@ exports.init = function (a) {
       $('.info-panel').css('height', $('.matchinfo').height());
       init = true;
     } else if (a == 'pit') {
+      isStand = false;
       if (fs.existsSync('./scouting/scouts.json')) {
         scouts = JSON.parse(fs.readFileSync('./scouting/scouts.json', 'utf-8'));
       } else {
@@ -340,6 +636,40 @@ exports.init = function (a) {
         }).show();
       }
       init = true;
+      pitTeam = new Noty({
+        text: 'Enter team number: <input class="form-control pit-team-number" type="number">',
+        type: 'success',
+        closeWith: ['button'],
+        layout: 'center'
+      }).show();
+    } else if (a == 'database') {
+      if (!fs.existsSync('./data-collect')) {
+        fs.mkdirSync('./data-collect');
+      }
+      if (!fs.existsSync('./data-collect/pit-scouting')) {
+        fs.mkdirSync('./data-collect/pit-scouting');
+      }
+      if (!fs.existsSync('./data-collect/stand-scouting')) {
+        fs.mkdirSync('./data-collect/stand-scouting');
+      }
+      if (!fs.existsSync('./data-collect/scouts.json')) {
+        fs.writeFileSync('./data-collect/scouts.json', '{}');
+      }
+      if (!fs.existsSync('./data-collect/scouts.json')) {
+        new Noty({
+          text: 'No scouts',
+          type: 'error'
+        }).show();
+      }
+      if (!fs.existsSync('./data-collect/schedule.json')) {
+        new Noty({
+          text: 'No schedule',
+          type: 'error'
+        }).show();
+      }
+      if (!fs.existsSync('./data-collect/exempt.json')) {
+        fs.writeFileSync('./data-collect/exempt.json', '{}');
+      }
     } else {
       throw new Error('Use \'scout\' or \'pit\'.');
       init = false;
@@ -457,6 +787,221 @@ exports.page = function (a, b) {
   }
 };
 // *****************************************************************************
+// exports.concat = function (a, b) {
+//   if (a == 'stand' || a == 'pit') {
+//     fs.writeFileSync(a + '.json', '[');
+//     var files = fs.readdirSync(b);
+//     for (i = 0; i < files.length; i++) {
+//       if (files[i].indexOf('.json') >= 0) {
+//         fs.appendFileSync(a + '.json', JSON.stringify(JSON.parse(fs.readFileSync(b + files[i], 'utf-8'))));
+//       }
+//     }
+//     fs.appendFileSync(a + '.json', ']');
+//   } else {
+//     throw new Error('Must be stand or pit');
+//   }
+// };
+// exports.rank = function (a, b) {
+//   if (a == 'stand' || a == 'pit') {
+//     var rank = JSON.parse(fs.readFileSync(a + '.json', 'utf-8'));
+//     console.log(rank);
+//   } else {
+//     throw new Error('Must be stand or pit');
+//   }
+// };
+// *****************************************************************************
+exports.database = function (a) {
+	importScouts();
+	importSchedule();
+	setExemptions(exemptionReq);
+	importPitManifest();
+	importStandManifest();
+	$(function () {
+		$('head').append(`
+			<style>
+				* {
+					font-family: Trebuchet MS !important;
+				}
+				.center{
+					text-align: center;
+				}
+				div {
+					position: relative;
+					top: -20px;
+				}
+				nav {
+					position: fixed;
+					top: -20px;
+				}
+				.act, .sect:hover, .sect:active:focus, .sect:focus {
+					background-color: darkblue;
+				}
+				th {
+					background-color: #e2e2e2;
+				}
+				.table3 {
+					background-color: #f2f2f2;
+				}
+				.table td, .table th{
+					border: black solid 1px !important;
+				}
+				.table1 {
+					background-color: #f7f7f7;
+				}
+				.table2 {
+					background-color: #d1d1d1;
+				}
+			</style>`
+		);
+		$('body').append(`
+			<nav class='center' style='background-color:#ededed;z-index:1;width:100%' data-spy='affix'>
+        <br>
+				<h2 style='position:relative;top:14px;'>Database App</h2>
+				<br>
+				<button class='btn-warning btn pit' type='button' class='btn-primary btn.lg'>Import Pit Data</button>
+				<button class='btn-warning btn stand' type='button' class='btn-primary btn.lg'>Import Stand Data</button>
+				<button class='btn-success btn export' type='button' class='btn-primary btn.lg'>Export Data</button>
+				<br>
+				<br>
+				<button class='sect act btn-primary btn members' type='button' style='margin-bottom: 10px;'>Members</button>
+				<button class='sect btn-primary btn teams' type='button' style='margin-bottom: 10px;'>Teams</button>
+				<button class='sect btn-primary btn matches' type='button' style='margin-bottom: 10px;'>Matches</button>
+				<button class='sect btn-primary btn schedule' type='button' style='margin-bottom:10px'>Match Schedule</button>
+				<br>
+			</nav>
+			<br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+			<div id='members' class='center'>
+				<h3>Members</h3>
+				<table style='width: 80%;border: 3px black solid; margin-left: auto; margin-right: auto;' id='scoutingTable' border='1' class='center-block table table-hover table-bordered'>
+					<thead>
+						<tr>
+							<th>Requirement</th>
+							<th>ID</th>
+							<th>Scout</th>
+    						<th>Pit Scouted</th>
+    						<th>Stand Scouted</th>
+    						<th>Total Scouted</th>
+						</tr>
+					</thead>
+					<tbody id='tbody'>
+					</tbody>
+				</table>
+			</div>
+			<div hidden id='teams' class='center'>
+				<h3>Teams</h3>
+				<table style='width: 80%;border: 3px black solid; margin-left: auto; margin-right;' id='robotTable' border='1' class='center-block table table-hover table-bordered'>
+					<thead>
+						<tr>
+							<th>#</th>
+							<th>Robot</th>
+							<th>Pit Scouted</th>
+    						<th>Scouted Matches</th>
+							</tr>
+					</thead>
+					<tbody id='robotBody'>
+					</tbody>
+				</table>
+			</div>
+			<div hidden id='matches' class='center'>
+				<h3>Scouted Matches</h3>
+				<table style='width: 80%;border: 3px black solid; margin-left: auto; margin-right: auto;' id='matchTable' border='1' class='center-block table table-hover table-bordered'>
+					<thead>
+						<tr>
+							<th>Match</th>
+							<th style='background-color:#ff9a8e;'>Red 1</th>
+    						<th style='background-color:#ffb8af;'>Red 2</th>
+    						<th style='background-color:#ff9a8e;'>Red 3</th>
+    						<th style='background-color:#afc4ff;'>Blue 1</th>
+    						<th style='background-color:#8eacff;'>Blue 2</th>
+    						<th style='background-color:#afc4ff;'>Blue 3</th>
+						</tr>
+					</thead>
+					<tbody id='matchBody'>
+					</tbody>
+				</table>
+			</div>
+			<div hidden id='schedule' class='center'>
+				<h3>Match Schedule</h3>
+				<table style='width: 80%;border: 3px black solid; margin-left: auto; margin-right: auto;' id='scheduleTable' border='1' class='center-block table table-hover table-bordered'>
+					<thead>
+						<tr>
+							<th class='first'>Match</th>
+							<th style='background-color:#ff9a8e;'>Red 1</th>
+    						<th style='background-color:#ffb8af;'>Red 2</th>
+    						<th style='background-color:#ff9a8e;'>Red 3</th>
+    						<th style='background-color:#afc4ff;'>Blue 1</th>
+    						<th style='background-color:#8eacff;'>Blue 2</th>
+    						<th style='background-color:#afc4ff;'>Blue 3</th>
+						</tr>
+					</thead>
+					<tbody id='scheduleBody'>
+					</tbody>
+				</table>
+			</div>
+		`);
+		$('.pit').click(function(){
+			importPit();
+		});
+		$('.stand').click(function(){
+			importStand();
+		});
+		$('.export').click(function(){
+			exportData();
+		});
+		$('.members').click(function(){
+			resetTables();
+			$('#members').show();
+			$('.members').addClass('act');
+		});
+		$('.teams').click(function(){
+			resetTables();
+			$('#teams').show();
+			$('.teams').addClass('act');
+		});
+		$('.matches').click(function(){
+			resetTables();
+			$('#matches').show();
+			$('.matches').addClass('act');
+		});
+		$('.schedule').click(function(){
+			resetTables();
+			$('#schedule').show();
+			$('.schedule').addClass('act');
+		});
+		createTables(a);
+		// Load Stand
+		for (x in manifestStand) {
+			if (fs.existsSync('data-collect/stand-scouting/' + manifestStand[x])) {
+				var data = JSON.parse(fs.readFileSync('data-collect/stand-scouting/' + manifestStand[x]));
+				addToTotal(data.scoutId,'stand');
+				$('#m' + data.matchNumber + data.role).css('background-color','blue');
+				$('#m' + data.matchNumber + data.role).css('color','white');
+				$('#m' + data.matchNumber + data.role).text(findScout(data.scoutId).name);
+			}
+		}
+		// Load Pit
+		for (x in manifestPit) {
+			if (fs.existsSync('data-collect/pit-scouting/' + manifestPit[x])) {
+				var data = JSON.parse(fs.readFileSync('data-collect/pit-scouting/' + manifestPit[x]));
+				var scoutOne = findScout(data.scoutIds[0]);
+				var scoutTwo = findScout(data.scoutIds[1]);
+				addToTotal(scoutOne.id,'pit');
+          		if (scoutTwo != null) {
+					addToTotal(scoutTwo.id,'pit');
+				}
+			}
+		}
+	});
+};
+// *****************************************************************************
 $(document).ready(function () {
 // *****************************************************************************
   $('.scout-c').click(function () {
@@ -549,6 +1094,10 @@ $(document).ready(function () {
       $('.btn-' + $(this).attr('class').substr(19) + '-next').remove();
     }
   });
+// *****************************************************************************
+  pitTeamEL();
+  $('.noty_close_button').remove();
+  $('.page-pane').hide();
 // *****************************************************************************
   $('.scout-num').click(function () {
     $('.num-change').val(json.scout);

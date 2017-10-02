@@ -5,15 +5,15 @@ In terminal:
 Then in your .js file:
 ```javascript
   var scout = require('scouting');
-  scout.init('stand'); // 'stand' for stand scouting and 'pit' for pit scouting
+  scout.init('stand'); // 'stand' for stand scouting, 'pit' for pit scouting, 'database' for database
 ```
 Then put this in the `<head>`:
 ```html
-  <link rel="stylesheet" href="node_modules/scouting/node_modules/noty/libs/noty.css">
+  <link rel="stylesheet" href="node_modules/noty/libs/noty.css">
 ```
 And this:
 ```html
-  <script src="node_modules/scouting/node_modules/noty/lib/noty.js"></script>
+  <script src="node_modules/noty/lib/noty.js"></script>
 ```
 
 ## Question Types:
@@ -72,11 +72,11 @@ Simplified from [Noty](https://www.npmjs.com/package/noty)
 #### Note:
 To make [Noty](https://www.npmjs.com/package/noty) work, put this in the `<head>`:
 ```html
-  <link rel="stylesheet" href="node_modules/scouting/node_modules/noty/libs/noty.css">
+  <link rel="stylesheet" href="node_modules/noty/libs/noty.css">
 ```
 And also put this before your `.js` file:
 ```html
-  <script src="node_modules/scouting/node_modules/noty/lib/noty.js"></script>
+  <script src="node_modules/noty/lib/noty.js"></script>
 ```
 ### Pie:
 Simplified from [Chart.js](https://www.npmjs.com/package/chartjs)
@@ -136,7 +136,20 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
   );
 ```
 
+## Database:
+### Database:
+```javascript
+  scout.database('2017orgg'); // argument is the TBA event key. Visit thebluealliance.com to check an event's event key.
+  // Make sure there is a good internet connection the first time scout.database() is executed!
+```
+
 ## Changelog
+### 2.0.0 (2017-10-02)
+* Added: Database with `scout.database();`.
+* Added: Database option on `scout.init('database');`
+* Added: Autosave support for pit apps.
+* Added: Team input for pit apps.
+
 ### 1.2.2 (2017-09-05)
 * Added: Change scout id by clicking on the scout name in the infobar.
 * Fixed: Autosave progress if app crash.
@@ -178,8 +191,8 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
 * Published Package.
 
 ## Unreleased
-### 2.0.0
-* Added: Database to keep track of scouts using `scout.database()`.
+### 3.0.0
+* Added: Analysis software.
 
 ## Created by Tristan (theamazingness)
 ## Maintained by the Non-Robot Software Department of [Team 1540 The Flaming Chickens](http://www.team1540.org)
