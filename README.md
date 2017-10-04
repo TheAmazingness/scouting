@@ -150,9 +150,11 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
 ```
 
 ## Changelog
-### 2.0.1 (2017-10-03)
+### 2.0.1 (2017-10-04)
 * Added: Match number verification.
 * Fixed: Readme.
+* Fixed: First page not showing up.
+* Fixed: Match info bar not displaying correctly.
 
 ### 2.0.0 (2017-10-02)
 * Added: Database with `scout.database();`.

@@ -31,6 +31,7 @@ var exemptionReq = 20;
 var pitValue = 0.5;
 var scoutList = [];
 var teams;
+var initRole;
 // *****************************************************************************
 function save() {
   manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
@@ -518,6 +519,7 @@ exports.done = function (a, b) {
   }
 };
 exports.init = function (a) {
+  initRole = a;
   initCount++;
   if (initCount == 1) {
     if (a == 'stand' || 'pit') {
@@ -1074,7 +1076,7 @@ $(document).ready(function () {
       $('.role-team').text(schedule[match][rolePos]);
     } else {
       new Noty({
-        text: 'This match number does not exist.'
+        text: 'This match number does not exist.',
         type: 'error'
       });
     }
@@ -1101,11 +1103,13 @@ $(document).ready(function () {
     }
   });
 // *****************************************************************************
-  pitTeamEL();
-  $('.noty_close_button').remove();
-  $('.page-pane').hide();
+  if (initRole == 'pit') {
+    pitTeamEL();
+    $('.noty_close_button').remove();
+    $('.page-pane').hide();
+  }
 // ****************************************************************************
-  $('.matchinfo').css('width', '100vw');
+  $('.matchinfo > .row').css('width', '100vw');
 // *****************************************************************************
   $('.scout-num').click(function () {
     $('.num-change').val(json.scout);

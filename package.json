@@ -1,6 +1,6 @@
 {
   "name": "scouting",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "scouting system for frc",
   "main": "scouting.js",
   "scripts": {
