@@ -9,10 +9,16 @@ Then in your .js file:
 ```
 Then put this in the `<head>`:
 ```html
-  <link rel="stylesheet" href="node_modules/noty/libs/noty.css">
+  <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
+  <link rel="stylesheet" href="node_modules/noty/lib/noty.css">
 ```
-And this:
+And this at the end of the `<body>` before your .js file:
 ```html
+  <script>
+    window.jQuery = window.$ = require('jquery');
+    var Popper = require('popper.js');
+  </script>
+  <script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>
   <script src="node_modules/noty/lib/noty.js"></script>
 ```
 
@@ -144,6 +150,10 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
 ```
 
 ## Changelog
+### 2.0.1 (2017-10-03)
+* Added: Match number verification.
+* Fixed: Readme.
+
 ### 2.0.0 (2017-10-02)
 * Added: Database with `scout.database();`.
 * Added: Database option on `scout.init('database');`

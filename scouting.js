@@ -240,29 +240,28 @@ function createTables(a) {
 		$(rs).append('<td id="' + id + 'num3">' + scout.total + '</td>');
 	}
 	// Teams Table
-  teams = exec('curl -X GET "https://www.thebluealliance.com/api/v3/event/' + a + '/teams/simple" -H "accept: application/json" -H "X-TBA-Auth-Key: p2nxGJxqkJo5a8clThWbi1ZNQhy8CaKlJd4YM5TOFgbR4d7y4KLFU1RWhLANpM8N"', {encoding: 'utf-8'});
+  teams = JSON.parse(exec('curl -X GET "https://www.thebluealliance.com/api/v3/event/' + a + '/teams/simple" -H "accept: application/json" -H "X-TBA-Auth-Key: p2nxGJxqkJo5a8clThWbi1ZNQhy8CaKlJd4YM5TOFgbR4d7y4KLFU1RWhLANpM8N"', {encoding: 'utf-8'}));
 	for (x in teams) {
-		var team = teams[x];
 		var tr = document.createElement('tr');
 		tr.setAttribute('id','r' + team + 'row');
 		$('#robotBody').append(tr);
 		var name = document.createElement('td');
 		name.setAttribute('id','r' + team + 'bot');
-		$('#r' + team + 'row').append(name);
-		$('#r' + team + 'bot').text(team);
+		$('#r' + teams[x].team_number + '-row').append(name);
+		$('#r' + teams[x].team_number + 'bot').text(team);
 		var aname = document.createElement('td');
 		aname.setAttribute('id','r' + team + 'nm');
-		$('#r' + team + 'row').append(aname);
-		$('#r' + team + 'nm').text(teams_names[x]);
+		$('#r' + teams[x].team_number + 'row').append(aname);
+		$('#r' + teams[x].team_number + 'nm').text(teams[x].nickname);
 		var pit = document.createElement('td');
 		pit.setAttribute('id','r' + team + 'pit');
-		$('#r' + team + 'row').append(pit);
-		$('#r' + team + 'pit').text('False');
-		$('#r' + team + 'pit').css('background-color','#ffdad1');
+		$('#r' + teams[x].team_number + 'row').append(pit);
+		$('#r' + teams[x].team_number + 'pit').text('False');
+		$('#r' + teams[x].team_number + 'pit').css('background-color','#ffdad1');
 		var stand = document.createElement('td');
 		stand.setAttribute('id','r' + team + 'stand');
-		$('#r' + team + 'row').append(stand);
-		$('#r' + team + 'stand').text('0');
+		$('#r' + teams[x].team_number + 'row').append(stand);
+		$('#r' + teams[x].team_number + 'stand').text('0');
 	}
 	// Match Table
 	for (match = 1; match <= Object.keys(matchSchedule).length; match++) {
@@ -1065,13 +1064,20 @@ $(document).ready(function () {
   });
 // *****************************************************************************
   $('.edit-matchnum').click(function () {
-    fs.writeFileSync('./scouting/match.txt', $('.matchnum').val());
-    $('.matchnum').val(fs.readFileSync('./scouting/match.txt', 'utf-8'));
-    $(this).fadeOut(function () {
-      $('.matchnum-wrap').css('margin-top', 'auto');
-    });
-    match = $('.matchnum').val();
-    $('.role-team').text(schedule[match][rolePos]);
+    if (schedule.hasOwnProperty($('.matchnum').val())) {
+      fs.writeFileSync('./scouting/match.txt', $('.matchnum').val());
+      $('.matchnum').val(fs.readFileSync('./scouting/match.txt', 'utf-8'));
+      $(this).fadeOut(function () {
+        $('.matchnum-wrap').css('margin-top', 'auto');
+      });
+      match = $('.matchnum').val();
+      $('.role-team').text(schedule[match][rolePos]);
+    } else {
+      new Noty({
+        text: 'This match number does not exist.'
+        type: 'error'
+      });
+    }
   });
   $('.matchnum').focus(function () {
     $('.edit-matchnum').fadeIn(1000);
@@ -1098,6 +1104,8 @@ $(document).ready(function () {
   pitTeamEL();
   $('.noty_close_button').remove();
   $('.page-pane').hide();
+// ****************************************************************************
+  $('.matchinfo').css('width', '100vw');
 // *****************************************************************************
   $('.scout-num').click(function () {
     $('.num-change').val(json.scout);

@@ -1,7 +1,7 @@
 {
   "name": "scouting",
-  "version": "1.2.2",
-  "description": "team 1540 scouting",
+  "version": "2.0.0",
+  "description": "scouting system for frc",
   "main": "scouting.js",
   "scripts": {
     "start": "node scouting.js",
