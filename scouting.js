@@ -37,10 +37,14 @@ function save() {
   manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
   if (isStand) {
     fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
-    manifest.push('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json');
+    if (manifest.indexOf('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json') === -1) {
+      manifest.push('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json');
+    }
   } else {
     fs.writeFileSync('./data/' + json.team + '.json', JSON.stringify(json));
-    manifest.push(json.team + '.json');
+    if (manifest.indexOf(json.team + '.json') === -1) {
+      manifest.push(json.team + '.json');
+    }
   }
   fs.writeFileSync('./data/manifest.json', JSON.stringify(manifest));
 };
@@ -509,11 +513,6 @@ exports.done = function (a, b) {
         `<button class="btn btn-outline-success done-` + count + `">Done!</button>`
       );
     }
-    $('.save-' + count).click(function () {
-      save();
-      fs.writeFileSync('./scouting/match.txt', match);
-      window.location.reload();
-    });
   } else {
     throw new Error('scout.init() not instantiated');
   }
@@ -1063,6 +1062,12 @@ $(document).ready(function () {
         $('.' + pages[index + 1]).fadeIn();
       });
     }
+  });
+// *****************************************************************************
+  $('.done-' + count).click(function () {
+    save();
+    fs.writeFileSync('./scouting/match.txt', match);
+    window.location.reload();
   });
 // *****************************************************************************
   $('.edit-matchnum').click(function () {
