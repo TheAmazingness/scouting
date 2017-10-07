@@ -151,6 +151,7 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
 
 ## Changelog
 ### 2.0.2 (2017-10)
+* Added: Change team number.
 * Fixed: Done button.
 
 ### 2.0.1 (2017-10-04)

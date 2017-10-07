@@ -1116,6 +1116,18 @@ $(document).ready(function () {
 // ****************************************************************************
   $('.matchinfo > .row').css('width', '100vw');
 // *****************************************************************************
+  $('.role-team').click(function () {
+    $(this).attr('contenteditable', 'true');
+  });
+  $('.role-team').keyup(function (event) {
+    if (event.which == 13) {
+      $(this).attr('contenteditable', 'false');
+      $(this).text($(this).text().replace(/[\n\r]/g, ''));
+      team = $(this).text();
+      save();
+    }
+  });
+// *****************************************************************************
   $('.scout-num').click(function () {
     $('.num-change').val(json.scout);
     $('.edit-scout').show();
