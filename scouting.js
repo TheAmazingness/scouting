@@ -479,6 +479,16 @@ exports.slider = function (a, b, c, d, e) {
     throw new Error('scout.init() not instantiated');
   }
 };
+
+exports.text = function (a, b) {
+	if (init) {
+		count++;
+		$(a).append(
+			`<p class="text-` + count + `">` + b + `</p>`
+		);
+	}
+}
+
 exports.textarea = function (a, b, c, d) {
   if (init) {
     count++;
