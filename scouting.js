@@ -32,7 +32,23 @@ var pitValue = 0.5;
 var scoutList = [];
 var teams;
 var initRole;
+var settings = false;
 // *****************************************************************************
+function addSettings() {
+	if (init && !settings) {
+		settings=true;
+		$("body").append(
+			`<div style="position:absolute;top:2vw;left:2vw;" class="dropdown">
+				<button type="button" id="dropdownMenuButton" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    			Settings
+  				</button>
+  				<div class="dropdown-menu settings-menu" aria-labelledby="dropdownMenuButton">
+  				</div>
+			</div>`
+		);
+	}
+}
+
 function save() {
   manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
   if (isStand) {
@@ -479,16 +495,14 @@ exports.slider = function (a, b, c, d, e) {
     throw new Error('scout.init() not instantiated');
   }
 };
-
-exports.text = function (a, b) {
+exports.text = function (a, b, c) {
 	if (init) {
 		count++;
 		$(a).append(
-			`<p class="text-` + count + `">` + b + `</p>`
+			`<h3 style="text-align:center;font-size:`+c+`;" class="text-` + count + `">` + b + `</h3>`
 		);
 	}
 }
-
 exports.textarea = function (a, b, c, d) {
   if (init) {
     count++;
@@ -629,7 +643,7 @@ exports.init = function (a) {
               <br>
               <button class="btn btn-outline-warning edit-matchnum" style="display: none; margin-left: 17.5vw;">Edit Match Number</button>
             </div>
-            <div class="col-sm-4 info-panel"></div>
+            <div class="col-sm-4 info-panel infobar-settings" style="display: table;"></div>
           </div>
         </nav>`
       );
@@ -796,6 +810,22 @@ exports.page = function (a, b) {
     throw new Error('scout.init() not instantiated');
   }
 };
+exports.flashdrive = function() {
+	if (init) {
+		addSettings();
+ 		$(".settings-menu").append(
+			`<a class="dropdown-item save-to-flash" href="#">Save to Flashdrive</a>`
+		);
+	}
+}
+exports.update = function() {
+	if (init) {
+		addSettings();
+		$(".settings-menu").append(
+			`<a class="dropdown-item update" href="#">Update</a>`
+		);
+	}
+}
 // *****************************************************************************
 // exports.concat = function (a, b) {
 //   if (a == 'stand' || a == 'pit') {
@@ -1105,6 +1135,56 @@ $(document).ready(function () {
     role = $('.btn-role:checked').val();
     fs.writeFileSync('./scouting/role.txt', role);
     window.location.reload();
+  });
+// *****************************************************************************
+  $('.save-to-flash').click(function () {
+  	var PSpath = "";
+  	var dirpath = "";
+  	if (isStand) {
+  		PSpath = "stand-scouting";
+  	} else {
+  		PSpath = "pit-scouting";
+  	}
+	var manifest;
+	if (fs.existsSync('data/manifest.json')) {
+		manifest = JSON.parse(fs.readFileSync("data/manifest.json"));
+	} else {
+		manifest = []
+	}
+	if (navigator.platform=="MacIntel") {
+		dirpath = "/Volumes/1540";
+	} else if (navigator.platform=="Win32") {
+		if (fs.existsSync("K:/companal")) {
+			dirpath = "K:";
+		} else if (fs.existsSync("D:/companal")) {
+			dirpath = "D:";
+		}
+	}
+	if (fs.existsSync(dirpath)) {
+		var array = JSON.parse(fs.readFileSync(data+"/companal/"+PSpath+"/manifest.json"));
+		for (x in manifest) {
+			if (!fs.existsSync(data+"/companal/"+PSpath+"/"+manifest[x])) {
+				array.push(manifest[x]);
+				fs.copySync('data/'+manifest[x], data+'/companal/'+PSpath+'/'+manifest[x]);
+			}
+		}
+		fs.writeFileSync(dirpath+"/companal/"+PSpath+"/"+JSON.stringify(array));
+		console.log("Files saved!");	
+	} else {
+		console.log("The flashdrive 1540 is not inputed into the tablet.");
+	}
+  });
+  $('.update').click(function () {
+	var exec = require('child_process').exec;
+	if (navigator.onLine) {
+		exec("git reset --hard");
+		exec("git pull");
+		exec("npm uninstall scouting");
+		exec("npm install scouting --save");
+		setTimeout(window.location.reload(),2000);
+	} else {
+		console.log("You don't have internet connection!");
+	}
   });
 // *****************************************************************************
   $('.' + pages[0]).show();

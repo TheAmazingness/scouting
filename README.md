@@ -133,6 +133,22 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
     '.place-to-put'
   );
 ```
+### Save to Flashdrive
+```javascript
+  scout.flashdrive();
+```
+### Update
+```javascript
+  scout.update();
+```
+### Text:
+```javascript
+  scout.text(
+  	'.place-to-put',
+  	'Text',
+  	'Font size'
+  );
+```
 ### New Page:
 ```javascript
   scout.page(
@@ -150,7 +166,11 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
 ```
 
 ## Changelog
+
 ### 2.0.2 (2017-10)
+* Added: Button that pulls from github and reinstalls package using `scout.update()`;
+* Added: Save to flashdrive with `scout.flashdrive()`;
+* Added: Text with `scout.text();`.
 * Added: Change team number.
 * Fixed: Done button.
 
