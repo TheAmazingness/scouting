@@ -1,11 +1,13 @@
 # For FRC Team 1540 The Flaming Chickens (http://www.team1540.org) scouting
 ## Start Here:
-In terminal:
-`npm install scouting --save`
+The first thing is to get [Electron](https://electron.atom.io/) set up and an html document.
+
+In terminal: `npm install scouting --save`
+
 Then in your .js file:
 ```javascript
   var scout = require('scouting');
-  scout.init('stand'); // 'stand' for stand scouting, 'pit' for pit scouting, 'database' for database
+  scout.init();
 ```
 Then put this in the `<head>`:
 ```html
@@ -29,13 +31,13 @@ And this at the end of the `<body>` before your .js file:
     '.place-to-put',
     'Title',
     [
-      // Name, OPTIONAL: bootstrap color class, OPTIONAL: value
-      ['Option 1', 'success', 'true'],
+      ['Option 1', 'success', true],
       ['Option 2']
     ],
     'jsonkey'
   );
 ```
+Checkboxes that default to `btn-outline-info` but color can be changed to the different Bootstrap color classes. Optional value at index 1 and 2. Index 1 is the Bootstrap color class, and index 2 is the optional value. If no value is provided, the value will default to the option name.
 ### Counter:
 ```javascript
   scout.counter(
@@ -46,6 +48,17 @@ And this at the end of the `<body>` before your .js file:
     'jsonkey'
   );
 ```
+A counter that has buttons to increment up and down. The up and down values can be customized and floats are not supported.
+### Grid:
+```javascript
+  scout.grid(
+    '.place-to-put',
+    'Title',
+    ['column 1', 'column 2', 'etc'],
+    ['option 1', 'option 2', 'etc']
+  );
+```
+A simple grid input system for questions with the same options. The buttons will display the options. Make sure that the column titles are not the same as each other or any other json keys because the title of each column is the json key for that column.
 ### Input:
 ```javascript
   scout.input(
@@ -55,27 +68,27 @@ And this at the end of the `<body>` before your .js file:
     'jsonkey'
   );
 ```
+An HTML `<input>` that saves automatically.
 ### Multiple Choice:
 ```javascript
   scout.multipleChoice(
     '.place-to-put',
     'Title',
     [
-      // Name, bootstrap color class, OPTIONAL: value
-      ['Option 1', 'success', 'true'],
+      ['Option 1', 'success', true],
       ['Option 2', 'danger']
     ],
     'jsonkey'
   );
 ```
+A multiple choice question that is customizable with as many choices as possible. Choice name and Bootstrap color classes are required, but value is optional. If no value is provided, then the value will be the choice name.
 ### Noty:
-Simplified from [Noty](https://www.npmjs.com/package/noty)
+Taken from [Noty](https://www.npmjs.com/package/noty)
 ```javascript
-  scout.noty(
-    // Takes one argument, see Noty documentation (https://ned.im/noty/).
-  );
+  scout.noty();
 ```
-#### Note:
+Returns a Noty object. `.show()` will display the Noty, as shown in the Noty docs. See Noty documentation (https://ned.im/noty/).
+##### Note:
 To make [Noty](https://www.npmjs.com/package/noty) work, put this in the `<head>`:
 ```html
   <link rel="stylesheet" href="node_modules/noty/libs/noty.css">
@@ -83,18 +96,6 @@ To make [Noty](https://www.npmjs.com/package/noty) work, put this in the `<head>
 And also put this before your `.js` file:
 ```html
   <script src="node_modules/noty/lib/noty.js"></script>
-```
-### Pie:
-Simplified from [Chart.js](https://www.npmjs.com/package/chartjs)
-```javascript
-  scout.pie(
-    '.place-to-put',
-    'Title',
-    // Slices
-    [25, 50, 25],
-    // Color
-    ['red', '#000', 'purple']
-  );
 ```
 ### Slider:
 Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
@@ -109,6 +110,7 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
     'jsonkey'
   );
 ```
+A slider simplified from noUiSlider.
 ### Textarea:
 ```javascript
   scout.textarea(
@@ -118,29 +120,57 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
     'jsonkey'
   );
 ```
+An HTML `<textarea>` that saves automatically as you type.
 
 ## Other Useful Functions:
+### Chart.js:
+Taken from [Chart.js](https://npmjs.com/package/chart.js)
+```javascript
+  scout.chart(
+    ctx,
+    {...}
+  );
+```
+Returns a chart.js object. `ctx` is the `<canvas>` element where the chart will go. See the chart.js docs for more information on making charts (http://www.chartjs.org/docs/latest/).
 ### Done:
 ```javascript
   scout.done(
     '.place-to-put',
-    false // Optional: false does not replaces next button, default true
+    false
   );
 ```
+A done button that saves the file and refreshes the app. The second argument is optional and defaults to `true`. If true, then the done button will replace the next button, and if false, then the done button will float.
 ### Login:
 ```javascript
   scout.login(
-    '.place-to-put'
+    '.place-to-put',
+    1540 // Code to access the change role page. Only numbers.
   );
 ```
-### Save to Flashdrive
+A login prompt that removes the back/next buttons and shows them when logged in. Make sure there is a `scouts.json` file present in the scouting directory (`../scouting/`) that contains key value pairs for members to login. The key should be an integer, and the value should be the name to display once logged in. `scout.login()` still needs to go inside a `scout.page()`; it does not automatically generate a page.
+### Pie:
+Simplified from [Chart.js](https://www.npmjs.com/package/chartjs)
 ```javascript
-  scout.flashdrive();
+  scout.pie(
+    '.place-to-put',
+    'Title',
+    // Slices
+    [25, 50, 25],
+    // Color
+    ['red', '#000', 'purple']
+  );
 ```
-### Update
+A pie chart simplified from Chart.js.
+### New Page:
 ```javascript
-  scout.update();
+  scout.page(
+    'Title',
+    [6, 6]
+  );
 ```
+Creates a new page with back/next buttons. Does not have a back button if it is the first page, and likewise does not have a next button if it is the next page. Also does not have a next button if a done button replaces it.
+NAMING CONVENTION: .cell-title-1 <-- 1 is the leftmost cell, array.length is the rightmost cell
+Uses the Bootstrap grid system. Numbers must add up to twelve.
 ### Text:
 ```javascript
   scout.text(
@@ -149,28 +179,27 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
   	'Font size'
   );
 ```
-### New Page:
-```javascript
-  scout.page(
-    'Title',
-    // NAMING CONVENTION: .cell-title-1 <-- 1 is the leftmost cell, array.length is the rightmost cell
-    [6, 6] // Uses the Bootstrap grid system. Numbers must add up to twelve.
-  );
-```
 
 ## Database:
 ### Database:
 ```javascript
-  scout.database('2017orgg'); // argument is the TBA event key. Visit thebluealliance.com to check an event's event key.
-  // Make sure there is a good internet connection the first time scout.database() is executed!
+  scout.database('2017orgg');
 ```
+Argument is the TBA event key. Visit thebluealliance.com to check an event's event key.
+Make sure there is a good internet connection the first time `scout.database()` is executed!
 
 ## Changelog
 
-### 2.0.2 (2017-10)
-* Added: Button that pulls from github and reinstalls package using `scout.update()`;
-* Added: Save to flashdrive with `scout.flashdrive()`;
+### 2.0.3 (2017-11-29)
+* Added: Pie chart added optional labels.
+* Added: `scout.chart();` to create custom [Chart.js](https://www.npmjs.com/package/chart.js) charts.
 * Added: Text with `scout.text();`.
+* Fixed: Change role with custom code.
+* Fixed: Match info bar takes up less space.
+* Fixed: Charts.
+* Fixed: Checkbox saving wrong values to json file.
+
+### 2.0.2 (2017-10-07)
 * Added: Change team number.
 * Fixed: Done button.
 
@@ -227,6 +256,18 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
 * Published Package.
 
 ## Unreleased
+### 2.1.0
+* Added: Button that pulls from github and reinstalls package using `scout.update()`;
+* Added: Save to flashdrive with `scout.flashdrive()`;
+* Added: `scout.grid();` for a grid question.
+### Save to Flashdrive
+```javascript
+  scout.flashdrive();
+```
+### Update
+```javascript
+  scout.update();
+```
 ### 3.0.0
 * Added: Analysis software.
 

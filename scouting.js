@@ -1,8 +1,9 @@
 var $ = require('jquery');
-var chartjs = require('chartjs');
+var Chart = require('chart.js');
 var noUiSlider = require('nouislider');
 var fs = require('fs-extra');
 var Noty = require('noty');
+// var fontAwesome = require('font-awesome'); NOTE: Doesn't work
 var exec = require('child_process').execSync;
 // *****************************************************************************
 var count = 0;
@@ -32,23 +33,7 @@ var pitValue = 0.5;
 var scoutList = [];
 var teams;
 var initRole;
-var settings = false;
 // *****************************************************************************
-function addSettings() {
-	if (init && !settings) {
-		settings=true;
-		$("body").append(
-			`<div style="position:absolute;top:2vw;left:2vw;" class="dropdown">
-				<button type="button" id="dropdownMenuButton" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    			Settings
-  				</button>
-  				<div class="dropdown-menu settings-menu" aria-labelledby="dropdownMenuButton">
-  				</div>
-			</div>`
-		);
-	}
-}
-
 function save() {
   manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
   if (isStand) {
@@ -385,6 +370,36 @@ exports.counter = function (a, b, c, d) {
     throw new Error('scout.init() not instantiated');
   }
 };
+// exports.grid = function (a, b, c, d) {
+//   if (init) {
+//     count++;
+//     $(a).append(
+//       `<div class="grid g-` + count + `" style="text-align: center;">
+//         <h3>` + b + `</h3>
+//         <table class="table table-bordered">
+//           <thead>
+//             <tr class="tr-` + count + `" style="text-align: center;"></tr>
+//           </thead>
+//           <tbody class="tbody-` + count + `" style="text-align: center;"></tbody>
+//         </table>
+//         <br>
+//         <br>
+//       </div>`
+//     );
+//     for (i = 0; i < c.length; i++) {
+//       $('.tr-' + count).append('<th scope="col">' + c[i] + '</th>');
+//     }
+//     for (i = 0; i < d.length; i++) {
+//       $('.tbody-' + count).append(`<tr class="grid-row-` + i + `-` + count + `"></tr>`);
+//       for (j = 0; j < c.length; j++) {
+//         $('.grid-row-' + i + '-' + count).append(`<td><div class="btn-group grid-` + count + `-` + i + `" data-toggle="buttons"><span class="btn btn-outline-info scout-g" style="border-radius: 0.25rem !important;"><input type="radio">` + d[i] + `</span><div></td>`);
+//         $('.grid-row-' + i + '-' + count).attr('data-group', c[j].toLowerCase().replace(/[\n\r]/g, '')); // BUG
+//       }
+//     }
+//   } else {
+//     throw new Error('scout.init() not instantiated');
+//   }
+// };
 exports.input = function (a, b, c, d) {
   if (init) {
     count++;
@@ -421,30 +436,6 @@ exports.multipleChoice = function (a, b, c, d) {
 };
 exports.noty = function (a) {
   return new Noty(a);
-};
-exports.pie = function (a, b, c, d) {
-  if (init) {
-    count++;
-    $(a).append(
-      `<div class="pie p-` + count + `">
-        <canvas id='p-` + d + `'></canvas>
-        <br>
-        <br>
-      </div>`
-    );
-    var ctx = document.getElementById('p-' + d).getContext('2d');
-    var myChart = new Chart(ctx, {
-      type: 'pie',
-      data: {
-        datasets: [{
-          backgroundColor: c,
-          data: b
-        }]
-      }
-    });
-  } else {
-    throw new Error('scout.init() not instantiated');
-  }
 };
 exports.slider = function (a, b, c, d, e) {
   if (init) {
@@ -495,14 +486,6 @@ exports.slider = function (a, b, c, d, e) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.text = function (a, b, c) {
-	if (init) {
-		count++;
-		$(a).append(
-			`<h3 style="text-align:center;font-size:`+c+`;" class="text-` + count + `">` + b + `</h3>`
-		);
-	}
-}
 exports.textarea = function (a, b, c, d) {
   if (init) {
     count++;
@@ -520,6 +503,9 @@ exports.textarea = function (a, b, c, d) {
 };
 // *****************************************************************************
 // Other functions:
+exports.chart = function (a, b) {
+  return new Chart(a, b);
+};
 exports.done = function (a, b) {
   if (init) {
     count++;
@@ -534,9 +520,39 @@ exports.done = function (a, b) {
         .show();
     } else {
       $(a).append(
-        `<button class="btn btn-outline-success done-` + count + `">Done!</button>`
+        `<button class="btn btn-outline-success btn-done">Done!</button>`
       );
     }
+  } else {
+    throw new Error('scout.init() not instantiated');
+  }
+};
+exports.pie = function (a, b, c, d, e) {
+  if (init) {
+    count++;
+    if (arguments.length == 4 && e == undefined) {
+      e = [];
+    }
+    $(a).append(
+      `<div class="pie p-` + count + `">
+        <h3 style="text-align: center;">` + b + `</h3>
+        <br>
+        <canvas id='p-` + b.toLowerCase().replace(/\s+/g, '-') + `'></canvas>
+        <br>
+        <br>
+      </div>`
+    );
+    var ctx = document.getElementById('p-' + b.toLowerCase().replace(/\s+/g, '-')).getContext('2d');
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: e,
+        datasets: [{
+          backgroundColor: d,
+          data: c
+        }]
+      }
+    });
   } else {
     throw new Error('scout.init() not instantiated');
   }
@@ -632,8 +648,7 @@ exports.init = function (a) {
                 Team: <span class="role-team" style="color: ` + roleColor + `;">` + team + `</span>
                 <br>
                 <br>
-                <span class="scout-num"></span>
-                <button class="btn btn-outline-warning edit-scout" style="display: none; margin-left: 5vw;">Edit Scout Number</button>
+                Scout: <span class="num-change">Not Logged In</span>
               </h3>
             </div>
             <div class="col-sm-4 info-panel matchnum-wrap">
@@ -643,7 +658,7 @@ exports.init = function (a) {
               <br>
               <button class="btn btn-outline-warning edit-matchnum" style="display: none; margin-left: 17.5vw;">Edit Match Number</button>
             </div>
-            <div class="col-sm-4 info-panel infobar-settings" style="display: table;"></div>
+            <div class="col-sm-4 info-panel"></div>
           </div>
         </nav>`
       );
@@ -695,7 +710,7 @@ exports.init = function (a) {
         fs.writeFileSync('./data-collect/exempt.json', '{}');
       }
     } else {
-      throw new Error('Use \'scout\' or \'pit\'.');
+      throw new Error('Use \'scout\', \'pit\', \'database\', \'analysis\', \'blank\'.');
       init = false;
     }
     return init;
@@ -703,7 +718,7 @@ exports.init = function (a) {
     throw new Error('scout.init() instantiated ' + initCount + ' times');
   }
 };
-exports.login = function (a) {
+exports.login = function (a, b) {
   if (init) {
     count++;
     var num = count;
@@ -754,13 +769,9 @@ exports.login = function (a) {
           json.scout = act;
           save();
           $('.btn-next, .btn-back').show();
-          $('.scout-num').append(
-            `Scout: <input class="num-change" style="border: none;" value="` + scouts[act] + `">
-            <br>
-            <br>`
-          );
+          $('.num-change').text(scouts[act]);
         }
-      } else if (act == 1540) {
+      } else if (act == b) {
         $('.role').fadeIn();
       } else {
         new Noty({
@@ -810,22 +821,14 @@ exports.page = function (a, b) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.flashdrive = function() {
+exports.text = function (a, b, c) {
 	if (init) {
-		addSettings();
- 		$(".settings-menu").append(
-			`<a class="dropdown-item save-to-flash" href="#">Save to Flashdrive</a>`
+		count++;
+		$(a).append(
+			`<p class="text-` + count + `" style="text-align: center; font-size: ` + c + `">` + b + `</p>`
 		);
 	}
-}
-exports.update = function() {
-	if (init) {
-		addSettings();
-		$(".settings-menu").append(
-			`<a class="dropdown-item update" href="#">Update</a>`
-		);
-	}
-}
+};
 // *****************************************************************************
 // exports.concat = function (a, b) {
 //   if (a == 'stand' || a == 'pit') {
@@ -1064,6 +1067,11 @@ $(document).ready(function () {
     eval('json.' + name + ' = ' + value);
     save();
   });
+  $('.scout-g').click(function () {
+    var key = $(this).parent().attr('data-group');
+    eval('json.' + key + ' = "' + $(this).text().toLowerCase().replace(/[\n\r]/g, '') + '"');
+    save();
+  });
   $('.scout-i').keyup(function () {
     var name = $(this).attr('data-key');
     var value = $(this).val();
@@ -1094,6 +1102,11 @@ $(document).ready(function () {
       });
     }
   });
+  $('.btn-done').click(function () {
+    save();
+    fs.writeFileSync('./scouting/match.txt', match);
+    window.location.reload();
+  });
   $('.btn-next').click(function () {
     var page = $(this).attr('data-page');
     var index = pages.indexOf(page);
@@ -1102,12 +1115,6 @@ $(document).ready(function () {
         $('.' + pages[index + 1]).fadeIn();
       });
     }
-  });
-// *****************************************************************************
-  $('.done-' + count).click(function () {
-    save();
-    fs.writeFileSync('./scouting/match.txt', match);
-    window.location.reload();
   });
 // *****************************************************************************
   $('.edit-matchnum').click(function () {
@@ -1135,56 +1142,6 @@ $(document).ready(function () {
     role = $('.btn-role:checked').val();
     fs.writeFileSync('./scouting/role.txt', role);
     window.location.reload();
-  });
-// *****************************************************************************
-  $('.save-to-flash').click(function () {
-  	var PSpath = "";
-  	var dirpath = "";
-  	if (isStand) {
-  		PSpath = "stand-scouting";
-  	} else {
-  		PSpath = "pit-scouting";
-  	}
-	var manifest;
-	if (fs.existsSync('data/manifest.json')) {
-		manifest = JSON.parse(fs.readFileSync("data/manifest.json"));
-	} else {
-		manifest = []
-	}
-	if (navigator.platform=="MacIntel") {
-		dirpath = "/Volumes/1540";
-	} else if (navigator.platform=="Win32") {
-		if (fs.existsSync("K:/companal")) {
-			dirpath = "K:";
-		} else if (fs.existsSync("D:/companal")) {
-			dirpath = "D:";
-		}
-	}
-	if (fs.existsSync(dirpath)) {
-		var array = JSON.parse(fs.readFileSync(data+"/companal/"+PSpath+"/manifest.json"));
-		for (x in manifest) {
-			if (!fs.existsSync(data+"/companal/"+PSpath+"/"+manifest[x])) {
-				array.push(manifest[x]);
-				fs.copySync('data/'+manifest[x], data+'/companal/'+PSpath+'/'+manifest[x]);
-			}
-		}
-		fs.writeFileSync(dirpath+"/companal/"+PSpath+"/"+JSON.stringify(array));
-		console.log("Files saved!");	
-	} else {
-		console.log("The flashdrive 1540 is not inputed into the tablet.");
-	}
-  });
-  $('.update').click(function () {
-	var exec = require('child_process').exec;
-	if (navigator.onLine) {
-		exec("git reset --hard");
-		exec("git pull");
-		exec("npm uninstall scouting");
-		exec("npm install scouting --save");
-		setTimeout(window.location.reload(),2000);
-	} else {
-		console.log("You don't have internet connection!");
-	}
   });
 // *****************************************************************************
   $('.' + pages[0]).show();
@@ -1218,20 +1175,22 @@ $(document).ready(function () {
     }
   });
 // *****************************************************************************
-  $('.scout-num').click(function () {
-    $('.num-change').val(json.scout);
-    $('.edit-scout').show();
+  $('.num-change').click(function () {
+    $(this).attr('contenteditable', 'true');
+    $(this).text(json.scout);
   });
-  $('.edit-scout').click(function () {
-    if (scouts[$('.num-change').val()] != undefined) {
-      json.scout = $('.num-change').val();
-      $('.num-change').val(scouts[$('.num-change').val()]);
-      $(this).hide();
-    } else {
-      new Noty({
-        text: 'No scout at this number',
-        type: 'error'
-      }).show();
+  $('.num-change').keyup(function (event) {
+    if (event.which == 13) {
+      if (scouts[$('.num-change').val()] != undefined) {
+        json.scout = $('.num-change').val();
+        $('.num-change').val(scouts[$('.num-change').val()]);
+        $(this).attr('contenteditable', 'false');
+      } else {
+        new Noty({
+          text: 'No scout at this number',
+          type: 'error'
+        }).show();
+      }
     }
   });
 });
