@@ -1,6 +1,6 @@
 {
   "name": "scouting",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "A scouting system for FRC teams, made by FRC Team 1540 the Flaming Chickens.",
   "main": "scouting.js",
   "scripts": {
