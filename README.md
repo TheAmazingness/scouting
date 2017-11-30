@@ -49,16 +49,6 @@ Checkboxes that default to `btn-outline-info` but color can be changed to the di
   );
 ```
 A counter that has buttons to increment up and down. The up and down values can be customized and floats are not supported.
-### Grid:
-```javascript
-  scout.grid(
-    '.place-to-put',
-    'Title',
-    ['column 1', 'column 2', 'etc'],
-    ['option 1', 'option 2', 'etc']
-  );
-```
-A simple grid input system for questions with the same options. The buttons will display the options. Make sure that the column titles are not the same as each other or any other json keys because the title of each column is the json key for that column.
 ### Input:
 ```javascript
   scout.input(
@@ -190,6 +180,9 @@ Make sure there is a good internet connection the first time `scout.database()` 
 
 ## Changelog
 
+### 2.0.4 (2017-11-29)
+* Fixed: Readme.
+
 ### 2.0.3 (2017-11-29)
 * Added: Pie chart added optional labels.
 * Added: `scout.chart();` to create custom [Chart.js](https://www.npmjs.com/package/chart.js) charts.
@@ -268,6 +261,16 @@ Make sure there is a good internet connection the first time `scout.database()` 
 ```javascript
   scout.update();
 ```
+### Grid:
+```javascript
+  scout.grid(
+    '.place-to-put',
+    'Title',
+    ['column 1', 'column 2', 'etc'],
+    ['option 1', 'option 2', 'etc']
+  );
+```
+A simple grid input system for questions with the same options. The buttons will display the options. Make sure that the column titles are not the same as each other or any other json keys because the title of each column is the json key for that column.
 ### 3.0.0
 * Added: Analysis software.
 
