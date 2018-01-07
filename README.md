@@ -1,5 +1,7 @@
 # For FRC Team 1540 The Flaming Chickens (http://www.team1540.org) scouting
 ## Start Here:
+> This is a Node.js module intended to work with Electron.
+
 The first thing is to get [Electron](https://electron.atom.io/) set up and an html document.
 
 In terminal: `npm install scouting --save`
@@ -31,13 +33,19 @@ And this at the end of the `<body>` before your .js file:
     '.place-to-put',
     'Title',
     [
-      ['Option 1', 'success', true],
-      ['Option 2']
+      {
+        text: 'This is displayed',
+        color: 'This can be a Bootstrap color class or a hexadecimal color value (no names or RGB values yet)',
+        value: 'Default value is the displayed text, but can manually set the value here.'
+      },
+      {
+        text: 'This is the second option. This has no color nor value so the color will be "info" and the value will be this text.'
+      }
     ],
     'jsonkey'
   );
 ```
-Checkboxes that default to `btn-outline-info` but color can be changed to the different Bootstrap color classes. Optional value at index 1 and 2. Index 1 is the Bootstrap color class, and index 2 is the optional value. If no value is provided, the value will default to the option name.
+Checkboxes that default to `btn-outline-info` but color can be changed to the different Bootstrap color classes or a hexadecimal color value (no names or RGB values yet). The color and value keys are optional, but text is required.
 ### Counter:
 ```javascript
   scout.counter(
@@ -59,25 +67,32 @@ A counter that has buttons to increment up and down. The up and down values can 
   );
 ```
 An HTML `<input>` that saves automatically.
-### Multiple Choice:
+### Radio Buttons:
 ```javascript
-  scout.multipleChoice(
+  scout.radio(
     '.place-to-put',
     'Title',
     [
-      ['Option 1', 'success', true],
-      ['Option 2', 'danger']
+      {
+        text: 'This is displayed',
+        color: 'This can be a Bootstrap color class or a hexadecimal color value (no names or RGB values yet)',
+        value: 'Default value is the displayed text, but can manually set the value here.'
+      },
+      {
+        text: 'This is the second option. This has no value so the value will be this text.',
+        color: '#abcdef'
+      }
     ],
     'jsonkey'
   );
 ```
-A multiple choice question that is customizable with as many choices as possible. Choice name and Bootstrap color classes are required, but value is optional. If no value is provided, then the value will be the choice name.
+Radio buttons that is customizable with as many choices as possible. Text and color is required, but value is not. If no value is provided, the value defaults to the text.
 ### Noty:
 Taken from [Noty](https://www.npmjs.com/package/noty)
 ```javascript
   scout.noty();
 ```
-Returns a Noty object. `.show()` will display the Noty, as shown in the Noty docs. See Noty documentation (https://ned.im/noty/).
+Returns a Noty object. `.show()` will display the Noty, as shown in the Noty docs. See Noty documentation for more information. (https://ned.im/noty/).
 ##### Note:
 To make [Noty](https://www.npmjs.com/package/noty) work, put this in the `<head>`:
 ```html
@@ -179,6 +194,19 @@ Argument is the TBA event key. Visit thebluealliance.com to check an event's eve
 Make sure there is a good internet connection the first time `scout.database()` is executed!
 
 ## Changelog
+
+### 2.0.6 (2018-01-07)
+* Fixed: `scout.blank()`.
+* Fixed: Saving files for any type other than 'stand'.
+
+### 2.0.5 (2017-12-31)
+* Added: `scout.multipleChoice()` is changed to `scout.radio()` because multipleChoice takes too long to type.
+* Added: `scout.radio()` and `scout.checkbox()` color key and take colors other than Bootstrap colors.
+* Fixed: `scout.radio()` buttons are created by JS objects instead of arrays.
+* Fixed: Checkbox buttons are also created by JS objects.
+* Fixed: Checkboxes save the correct values for real now.
+* Fixed: `scout.init('blank');` creates a blank page.
+* Fixed: Database can work without internet connection after the first execution.
 
 ### 2.0.4 (2017-11-29)
 * Fixed: Readme.

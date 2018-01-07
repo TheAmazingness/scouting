@@ -21,7 +21,7 @@ var schedule;
 var init = false;
 var initCount = 0;
 var loginCount = 0;
-var isStand;
+var isStand = false;
 var pitTeam;
 var pitConfirm;
 var manifest;
@@ -33,6 +33,8 @@ var pitValue = 0.5;
 var scoutList = [];
 var teams;
 var initRole;
+var isPit = false;
+var filename;
 // *****************************************************************************
 function save() {
   manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
@@ -41,10 +43,29 @@ function save() {
     if (manifest.indexOf('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json') === -1) {
       manifest.push('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json');
     }
-  } else {
+  } else if (isPit) {
     fs.writeFileSync('./data/' + json.team + '.json', JSON.stringify(json));
     if (manifest.indexOf(json.team + '.json') === -1) {
       manifest.push(json.team + '.json');
+    }
+  } else {
+    if (!fs.existsSync('./data/' + filename + '.json')) {
+      filename = new Noty({
+        text: 'Filename: <input class="form-control filename" type="text">.json',
+        type: 'success',
+        closeWith: ['button'],
+        layout: 'center'
+      }).show();
+      $('.filename').keyup(function () {
+        if (event.which = 13) {
+          filename.close();
+          filename = $(this).text();
+        }
+      });
+      fs.writeFileSync('./data/' + filename + '.json', JSON.stringify(json));
+      if (manifest.indexOf(json.team + '.json') === -1) {
+        manifest.push(json.team + '.json');
+      }
     }
   }
   fs.writeFileSync('./data/manifest.json', JSON.stringify(manifest));
@@ -246,7 +267,11 @@ function createTables(a) {
 		$(rs).append('<td id="' + id + 'num3">' + scout.total + '</td>');
 	}
 	// Teams Table
-  teams = JSON.parse(exec('curl -X GET "https://www.thebluealliance.com/api/v3/event/' + a + '/teams/simple" -H "accept: application/json" -H "X-TBA-Auth-Key: p2nxGJxqkJo5a8clThWbi1ZNQhy8CaKlJd4YM5TOFgbR4d7y4KLFU1RWhLANpM8N"', {encoding: 'utf-8'}));
+  if (fs.existsSync('scouting/database.json')) {
+    teams = fs.readFileSync('scouting/database.json');
+  } else {
+    teams = JSON.parse(exec('curl -X GET "https://www.thebluealliance.com/api/v3/event/' + a + '/teams/simple" -H "accept: application/json" -H "X-TBA-Auth-Key: p2nxGJxqkJo5a8clThWbi1ZNQhy8CaKlJd4YM5TOFgbR4d7y4KLFU1RWhLANpM8N"', {encoding: 'utf-8'}));
+  }
 	for (x in teams) {
 		var tr = document.createElement('tr');
 		tr.setAttribute('id','r' + team + 'row');
@@ -274,12 +299,19 @@ function createTables(a) {
 		var rs = '#m' + match + 'row';
 		$('#matchBody').append('<tr id="m' + match + 'row"></tr>');
 		$(rs).append('<td id="m' + match + 'num">' + match + '</td>');
-		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r1">False</td>');
-		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r2">False</td>');
-		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r3">False</td>');
-		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b1">False</td>');
-		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b2">False</td>');
-		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b3">False</td>');
+    for (i = 0; i < 5; i++) {
+      if (i <= 2) {
+        $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r' + i + '">False</td>');
+      } else {
+        $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b' + i + '">False</td>');
+      }
+    }
+		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r1">False</td>');
+		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r2">False</td>');
+		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r3">False</td>');
+		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b1">False</td>');
+		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b2">False</td>');
+		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b3">False</td>');
 	}
 	// Schedule Table
 	for (match = 1; match < Object.keys(matchSchedule).length + 1; match++) {
@@ -334,9 +366,36 @@ exports.checkbox = function (a, b, c, d) {
       </div>`
     );
     for (i = 0; i < c.length; i++) {
-      var val = c[i][2] != undefined ? 'value="' + c[i][2] + '"' : '';
-      var style = c[i][1] != undefined ? c[i][1] : 'info';
-      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) +  ' scout-c btn-outline-' + style + '" data-key="' + d + '"><input type="checkbox" ' + val + ' autocomplete="off">' + c[i][0] + '</span>');
+      let color = c[i]['color'];
+      var val = c[i]['value'] != undefined ? 'value="' + c[i]['value'] + '"' : '';
+      var style = ((color != undefined) && (color.indexOf('#') < 0)) ? color : 'info';
+      if (c[i]['text'] == undefined) {
+        throw new Error('text cannot be undefined');
+      }
+      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) +  ' scout-c btn-outline-' + style + '" data-key="' + d + '"><input type="checkbox" ' + val + ' autocomplete="off">' + c[i]['text'] + '</span>');
+      if (color != undefined && color.indexOf('#') >= 0) {
+        $('.btn-' + count + '-' + (i + 1))
+          .css({color: color, borderColor: color})
+          .mouseenter(function () {
+            $(this).css({backgroundColor: color, color: 'white'});
+          })
+          .mouseleave(function () {
+            if (!$(this).hasClass('active')) {
+              $(this).css({background: '', color: color});
+            }
+          })
+          .mousedown(function () {
+            if (!$(this).hasClass('active')) {
+              $(this)
+                .css({backgroundColor: '', color: color, borderColor: color})
+                .mouseenter();
+            } else {
+              $(this)
+                .css({backgroundColor: '', color: color, borderColor: color})
+                .mouseenter();
+            }
+          });
+      }
     }
   } else {
     throw new Error('scout.init() not instantiated');
@@ -393,7 +452,8 @@ exports.counter = function (a, b, c, d) {
 //       $('.tbody-' + count).append(`<tr class="grid-row-` + i + `-` + count + `"></tr>`);
 //       for (j = 0; j < c.length; j++) {
 //         $('.grid-row-' + i + '-' + count).append(`<td><div class="btn-group grid-` + count + `-` + i + `" data-toggle="buttons"><span class="btn btn-outline-info scout-g" style="border-radius: 0.25rem !important;"><input type="radio">` + d[i] + `</span><div></td>`);
-//         $('.grid-row-' + i + '-' + count).attr('data-group', c[j].toLowerCase().replace(/[\n\r]/g, '')); // BUG
+//         $('.grid-row-' + i + '-' + count).attr('data-group', c[j].toLowerCase().replace(/[\n\r]/g, ''));
+//         console.log($('.grid-row-' + i + '-' + count).attr('data-group'));
 //       }
 //     }
 //   } else {
@@ -415,7 +475,7 @@ exports.input = function (a, b, c, d) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.multipleChoice = function (a, b, c, d) {
+exports.radio = function (a, b, c, d) {
   if (init) {
     count++;
     $(a).append(
@@ -427,8 +487,26 @@ exports.multipleChoice = function (a, b, c, d) {
       </div>`
     );
     for (i = 0; i < c.length; i++) {
-      var val = c[i][2] != undefined ? 'value="' + c[i][2] + '"' : '';
-      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) + ' scout-mc btn-outline-' + c[i][1] + '" data-key="' + d + '"><input type="radio" ' + val + ' autocomplete="off">' + c[i][0] + '</span>');
+      let color = c[i]['color'];
+      var val = c[i]['value'] != undefined ? 'value="' + c[i]['value'] + '"' : '';
+      var style = color.indexOf('#') < 0 ? color : 'info';
+      if (c[i]['text'] == undefined) {
+        throw new Error('text cannot be undefined');
+      }
+      if (c[i]['color'] == undefined) {
+        throw new Error('color cannot be undefined');
+      }
+      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) + ' scout-mc btn-outline-' + style + '" data-key="' + d + '"><input type="radio" ' + val + ' autocomplete="off">' + c[i]['text'] + '</span>');
+      if (color.indexOf('#') >= 0) {
+        $('.btn-' + count + '-' + (i + 1))
+          .css({color: color, borderColor: color})
+          .mouseenter(function () {
+            $(this).css({backgroundColor: color, color: 'white'});
+          })
+          .mouseleave(function () {
+            $(this).css({backgroundColor: '', color: color});
+          });
+      }
     }
   } else {
     throw new Error('scout.init() not instantiated');
@@ -709,7 +787,7 @@ exports.init = function (a) {
       if (!fs.existsSync('./data-collect/exempt.json')) {
         fs.writeFileSync('./data-collect/exempt.json', '{}');
       }
-    } else {
+    } else if (a == 'blank') {} else {
       throw new Error('Use \'scout\', \'pit\', \'database\', \'analysis\', \'blank\'.');
       init = false;
     }
@@ -1050,7 +1128,7 @@ $(document).ready(function () {
   $('.scout-c').click(function () {
     var name = $(this).attr('data-key');
     var value = $(this).children().attr('value') == undefined ? $(this).text() : $(this).children().val();
-    var index = cArr.indexOf(value);
+    var index = cArr.indexOf('"' + value + '"');
     if (!$(this).hasClass('active')) {
       typeof value == 'string' && value != 'true' && value != 'false' ?
         cArr.push('"' + value + '"') :
