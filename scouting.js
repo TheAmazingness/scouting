@@ -35,40 +35,52 @@ var teams;
 var initRole;
 var isPit = false;
 var filename;
+var fileExist = false;
+var filenameString;
+var required = [];
+var isSave = false;
 // *****************************************************************************
 function save() {
-  manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
-  if (isStand) {
-    fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
-    if (manifest.indexOf('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json') === -1) {
-      manifest.push('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json');
-    }
-  } else if (isPit) {
-    fs.writeFileSync('./data/' + json.team + '.json', JSON.stringify(json));
-    if (manifest.indexOf(json.team + '.json') === -1) {
-      manifest.push(json.team + '.json');
-    }
-  } else {
-    if (!fs.existsSync('./data/' + filename + '.json')) {
-      filename = new Noty({
-        text: 'Filename: <input class="form-control filename" type="text">.json',
-        type: 'success',
-        closeWith: ['button'],
-        layout: 'center'
-      }).show();
-      $('.filename').keyup(function () {
-        if (event.which = 13) {
-          filename.close();
-          filename = $(this).text();
-        }
-      });
-      fs.writeFileSync('./data/' + filename + '.json', JSON.stringify(json));
+  if (isSave) {
+    manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
+    if (isStand) {
+      fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
+      if (manifest.indexOf('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json') === -1) {
+        manifest.push('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json');
+      }
+    } else if (isPit) {
+      fs.writeFileSync('./data/' + json.team + '.json', JSON.stringify(json));
       if (manifest.indexOf(json.team + '.json') === -1) {
         manifest.push(json.team + '.json');
       }
+    } else {
+      if (!fileExist) {
+        filename = new Noty({
+          text: 'Filename: <input class="form-control filename" type="text">',
+          type: 'success',
+          closeWith: ['button'],
+          layout: 'center'
+        }).show();
+        $('.filename').keyup(function () {
+          if (event.which == 13) {
+            filenameString = $(this).val();
+            fs.writeFileSync('./data/' + filenameString + '.json', JSON.stringify(json));
+            if (manifest.indexOf(filenameString + '.json') === -1) {
+              manifest.push(filenameString + '.json');
+            }
+            fileExist = true;
+            filename.close();
+          }
+        });
+      } else {
+        fs.writeFileSync('./data/' + filenameString + '.json', JSON.stringify(json));
+        if (manifest.indexOf(filenameString + '.json') === -1) {
+          manifest.push(filenameString + '.json');
+        }
+      }
     }
+    fs.writeFileSync('./data/manifest.json', JSON.stringify(manifest));
   }
-  fs.writeFileSync('./data/manifest.json', JSON.stringify(manifest));
 };
 function pitTeamEL() {
   $('.pit-team-number').keyup(function () {
@@ -354,7 +366,7 @@ function requirement(req) {
 }
 // *****************************************************************************
 // Question Types:
-exports.checkbox = function (a, b, c, d) {
+exports.checkbox = function (a, b, c, d, e) {
   if (init) {
     count++;
     $(a).append(
@@ -372,7 +384,7 @@ exports.checkbox = function (a, b, c, d) {
       if (c[i]['text'] == undefined) {
         throw new Error('text cannot be undefined');
       }
-      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) +  ' scout-c btn-outline-' + style + '" data-key="' + d + '"><input type="checkbox" ' + val + ' autocomplete="off">' + c[i]['text'] + '</span>');
+      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) +  ' scout-c btn-outline-' + style + '" data-key="' + d + '"><input type="checkbox" ' + val + ' autocomplete="off" style="display: none;">' + c[i]['text'] + '</span>');
       if (color != undefined && color.indexOf('#') >= 0) {
         $('.btn-' + count + '-' + (i + 1))
           .css({color: color, borderColor: color})
@@ -397,11 +409,14 @@ exports.checkbox = function (a, b, c, d) {
           });
       }
     }
+    if (e) {
+      required.push(d)
+    }
   } else {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.counter = function (a, b, c, d) {
+exports.counter = function (a, b, c, d, e) {
   if (init) {
     count++;
     $(a).append(
@@ -425,6 +440,9 @@ exports.counter = function (a, b, c, d) {
       var val = parseInt($('.' + d + '-co').val());
       $('.' + d + '-co').val(val - parseInt(c));
     });
+    if (e) {
+      required.push(d)
+    }
   } else {
     throw new Error('scout.init() not instantiated');
   }
@@ -460,7 +478,7 @@ exports.counter = function (a, b, c, d) {
 //     throw new Error('scout.init() not instantiated');
 //   }
 // };
-exports.input = function (a, b, c, d) {
+exports.input = function (a, b, c, d, e) {
   if (init) {
     count++;
     $(a).append(
@@ -471,11 +489,14 @@ exports.input = function (a, b, c, d) {
         <br>
       </div>`
     );
+    if (e) {
+      required.push(d)
+    }
   } else {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.radio = function (a, b, c, d) {
+exports.radio = function (a, b, c, d, e) {
   if (init) {
     count++;
     $(a).append(
@@ -496,7 +517,7 @@ exports.radio = function (a, b, c, d) {
       if (c[i]['color'] == undefined) {
         throw new Error('color cannot be undefined');
       }
-      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) + ' scout-mc btn-outline-' + style + '" data-key="' + d + '"><input type="radio" ' + val + ' autocomplete="off">' + c[i]['text'] + '</span>');
+      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) + ' scout-mc btn-outline-' + style + '" data-key="' + d + '"><input type="radio" ' + val + ' autocomplete="off" style="display: none;">' + c[i]['text'] + '</span>');
       if (color.indexOf('#') >= 0) {
         $('.btn-' + count + '-' + (i + 1))
           .css({color: color, borderColor: color})
@@ -508,6 +529,9 @@ exports.radio = function (a, b, c, d) {
           });
       }
     }
+    if (e) {
+      required.push(d)
+    }
   } else {
     throw new Error('scout.init() not instantiated');
   }
@@ -515,7 +539,7 @@ exports.radio = function (a, b, c, d) {
 exports.noty = function (a) {
   return new Noty(a);
 };
-exports.slider = function (a, b, c, d, e) {
+exports.slider = function (a, b, c, d, e, f) {
   if (init) {
     count++;
     $('head').append('<link rel="stylesheet" href="node_modules/nouislider/distribute/nouislider.css">');
@@ -560,11 +584,14 @@ exports.slider = function (a, b, c, d, e) {
       eval('json.' + e + ' = [' + value + ']');
       save();
     });
+    if (f) {
+      required.push(d)
+    }
   } else {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.textarea = function (a, b, c, d) {
+exports.textarea = function (a, b, c, d, e) {
   if (init) {
     count++;
     $(a).append(
@@ -575,6 +602,9 @@ exports.textarea = function (a, b, c, d) {
         <br>
       </div>`
     );
+    if (e) {
+      required.push(d)
+    }
   } else {
     throw new Error('scout.init() not instantiated');
   }
@@ -635,9 +665,10 @@ exports.pie = function (a, b, c, d, e) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.init = function (a) {
+exports.init = function (a, b) {
   initRole = a;
   initCount++;
+  isSave = b ? true : false;
   if (initCount == 1) {
     if (a == 'stand' || 'pit') {
       var scoutDir = './scouting';
@@ -743,7 +774,7 @@ exports.init = function (a) {
       $('.info-panel').css('height', $('.matchinfo').height());
       init = true;
     } else if (a == 'pit') {
-      isStand = false;
+      isPit = true;
       if (fs.existsSync('./scouting/scouts.json')) {
         scouts = JSON.parse(fs.readFileSync('./scouting/scouts.json', 'utf-8'));
       } else {
@@ -787,7 +818,9 @@ exports.init = function (a) {
       if (!fs.existsSync('./data-collect/exempt.json')) {
         fs.writeFileSync('./data-collect/exempt.json', '{}');
       }
-    } else if (a == 'blank') {} else {
+    } else if (a == 'blank') {
+      init = true;
+    } else {
       throw new Error('Use \'scout\', \'pit\', \'database\', \'analysis\', \'blank\'.');
       init = false;
     }
@@ -1125,6 +1158,10 @@ exports.database = function (a) {
 // *****************************************************************************
 $(document).ready(function () {
 // *****************************************************************************
+  if (!fileExist) {
+    save();
+  }
+// *****************************************************************************
   $('.scout-c').click(function () {
     var name = $(this).attr('data-key');
     var value = $(this).children().attr('value') == undefined ? $(this).text() : $(this).children().val();
@@ -1181,9 +1218,22 @@ $(document).ready(function () {
     }
   });
   $('.btn-done').click(function () {
-    save();
-    fs.writeFileSync('./scouting/match.txt', match);
-    window.location.reload();
+    var reqTrue = [];
+    for (i = 0; i < required.length; i++) {
+      if (!json.hasOwnProperty(required[i])) {
+        new Noty({
+          text: 'Please complete all required fields.',
+          type: 'error'
+        });
+        break;
+      }
+      reqTrue.push(true);
+      if (reqTrue[(required.length - 1)]) {
+        save();
+        fs.writeFileSync('./scouting/match.txt', match);
+        window.location.reload();
+      }
+    }
   });
   $('.btn-next').click(function () {
     var page = $(this).attr('data-page');

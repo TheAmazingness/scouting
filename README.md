@@ -8,8 +8,9 @@ In terminal: `npm install scouting --save`
 
 Then in your .js file:
 ```javascript
-  var scout = require('scouting');
-  scout.init();
+  window.jQuery = window.$ = require('jquery');
+  const scout = require('scouting');
+  scout.init('blank', true);
 ```
 Then put this in the `<head>`:
 ```html
@@ -42,10 +43,11 @@ And this at the end of the `<body>` before your .js file:
         text: 'This is the second option. This has no color nor value so the color will be "info" and the value will be this text.'
       }
     ],
-    'jsonkey'
+    'jsonkey',
+    true
   );
 ```
-Checkboxes that default to `btn-outline-info` but color can be changed to the different Bootstrap color classes or a hexadecimal color value (no names or RGB values yet). The color and value keys are optional, but text is required.
+Checkboxes that default to `btn-outline-info` but color can be changed to the different Bootstrap color classes or a hexadecimal color value (no names or RGB values yet). The color and value keys are optional, but text is required. The last boolean is whether or not the question is required.
 ### Counter:
 ```javascript
   scout.counter(
@@ -53,20 +55,22 @@ Checkboxes that default to `btn-outline-info` but color can be changed to the di
     'Title',
     // Increment
     1,
-    'jsonkey'
+    'jsonkey',
+    true
   );
 ```
-A counter that has buttons to increment up and down. The up and down values can be customized and floats are not supported.
+A counter that has buttons to increment up and down. The up and down values can be customized and floats are not supported. The last boolean is whether or not the question is required.
 ### Input:
 ```javascript
   scout.input(
     '.place-to-put',
     'Title',
     'Placeholder'
-    'jsonkey'
+    'jsonkey',
+    true
   );
 ```
-An HTML `<input>` that saves automatically.
+An HTML `<input>` that saves automatically. The last boolean is whether or not the question is required.
 ### Radio Buttons:
 ```javascript
   scout.radio(
@@ -83,10 +87,11 @@ An HTML `<input>` that saves automatically.
         color: '#abcdef'
       }
     ],
-    'jsonkey'
+    'jsonkey',
+    true
   );
 ```
-Radio buttons that is customizable with as many choices as possible. Text and color is required, but value is not. If no value is provided, the value defaults to the text.
+Radio buttons that is customizable with as many choices as possible. Text and color is required, but value is not. If no value is provided, the value defaults to the text. The last boolean is whether or not the question is required.
 ### Noty:
 Taken from [Noty](https://www.npmjs.com/package/noty)
 ```javascript
@@ -112,20 +117,22 @@ Simplified from [noUiSlider](https://www.npmjs.com/package/nouislider)
     [25, 50, 75],
     // Color
     ['red', '#000', 'purple', 'green'],
-    'jsonkey'
+    'jsonkey',
+    true
   );
 ```
-A slider simplified from noUiSlider.
+A slider simplified from noUiSlider. The last boolean is whether or not the question is required.
 ### Textarea:
 ```javascript
   scout.textarea(
     '.place-to-put',
     'Title',
     'Placeholder'
-    'jsonkey'
+    'jsonkey',
+    true
   );
 ```
-An HTML `<textarea>` that saves automatically as you type.
+An HTML `<textarea>` that saves automatically as you type. The last boolean is whether or not the question is required.
 
 ## Other Useful Functions:
 ### Chart.js:
@@ -136,7 +143,7 @@ Taken from [Chart.js](https://npmjs.com/package/chart.js)
     {...}
   );
 ```
-Returns a chart.js object. `ctx` is the `<canvas>` element where the chart will go. See the chart.js docs for more information on making charts (http://www.chartjs.org/docs/latest/).
+Returns a chart.js object. `ctx` is the `<canvas>` element where the chart will go. See the chart.js docs for more information on making charts ([http://www.chartjs.org/docs/latest/](http://www.chartjs.org/docs/latest/)).
 ### Done:
 ```javascript
   scout.done(
@@ -194,6 +201,11 @@ Argument is the TBA event key. Visit thebluealliance.com to check an event's eve
 Make sure there is a good internet connection the first time `scout.database()` is executed!
 
 ## Changelog
+
+### 2.0.7 (2018-01-)
+* Added: Required questions.
+* Added: Option to not save files.
+* Fixed: Saving files.
 
 ### 2.0.6 (2018-01-07)
 * Fixed: `scout.blank()`.
