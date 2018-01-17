@@ -96,7 +96,7 @@ function pitTeamEL() {
             Noty.button('Continue', 'btn btn-outline-danger', function () {
               pitConfirm.close();
               save();
-              $('.page-pane').show();
+              $('.' + pages[0]).show();
             }, {id: 'pit-btn-cont'}),
             Noty.button('Go Back', 'btn btn-outline-success', function () {
               pitConfirm.close();
@@ -109,7 +109,7 @@ function pitTeamEL() {
       } else {
         pitTeam.close();
         save();
-        $('.page-pane').show();
+        $('.' + pages[0]).show();
       }
     }
   });
@@ -622,9 +622,9 @@ exports.done = function (a, b) {
       b = true;
     }
     if (b) {
-      $('.btn-' + $('.body-div-' + a.substr(1)).attr('class').substr(19) + '-next')
-        .replaceWith(`<button class="btn btn-outline-success done-` + count + `">Done!</button>`)
-        .removeClass('.btn-' + $('.body-div-' + a.substr(1)).attr('class').substr(19) + '-next')
+      $('.btn-' + a.substring(6, a.length - 2) + '-next')
+        .replaceWith(`<button class="btn btn-outline-success btn-done done-` + count + `">Done!</button>`)
+        .removeClass('btn-' + a.substring(6, a.length - 2) + '-next')
         .show();
     } else {
       $(a).append(
@@ -767,7 +767,7 @@ exports.init = function (a, b) {
               <br>
               <button class="btn btn-outline-warning edit-matchnum" style="display: none; margin-left: 17.5vw;">Edit Match Number</button>
             </div>
-            <div class="col-sm-4 info-panel"></div>
+            <div class="col-sm-4 info-panel next-back"></div>
           </div>
         </nav>`
       );
@@ -898,25 +898,49 @@ exports.login = function (a, b) {
 exports.page = function (a, b) {
   if (init) {
     var sum = 0;
-    $('body').append(
-      `<div class="page-pane body-div-` + a.toLowerCase().replace(/\s+/g, '-') + `" style="height: 100vh; width: 100vw; display: none;">
-        <br>
-        <h1 style="text-align: center;">` + a + `</h1>
-        <br>
-        <hr>
-        <br>
-        <br>
-        <div class="` + a.toLowerCase().replace(/\s+/g, '-') + ` container">
-          <div class="row row-` + a.toLowerCase().replace(/\s+/g, '-') + `"></div>
-        </div>
+    if (!isStand) {
+      $('body').append(
+        `<div class="page-pane body-div-` + a.toLowerCase().replace(/\s+/g, '-') + `" style="height: 100vh; width: 100vw; display: none;">
+          <br>
+          <h1 style="text-align: center;">` + a + `</h1>
+          <br>
+          <hr>
+          <br>
+          <br>
+          <div class="` + a.toLowerCase().replace(/\s+/g, '-') + ` container">
+            <div class="row row-` + a.toLowerCase().replace(/\s+/g, '-') + `"></div>
+          </div>
+          <div class="nav-btns">
+          <button class="btn btn-outline-danger btn-back btn-` + a.toLowerCase().replace(/\s+/g, '-') + `-back" data-page="body-div-` + a.toLowerCase().replace(/\s+/g, '-') + `" style="margin-left: 5%;"><i class="fa fa-chevron-left"></i> Back</button>
+          <button class="btn btn-outline-success btn-next btn-` + a.toLowerCase().replace(/\s+/g, '-') + `-next" data-page="body-div-` + a.toLowerCase().replace(/\s+/g, '-') + `">Next <i class="fa fa-chevron-right"></i></button>
+          </div>
+          <br>
+          <br>
+        </div>`
+      );
+    } else {
+      $('body').append(
+        `<div class="page-pane body-div-` + a.toLowerCase().replace(/\s+/g, '-') + `" style="height: 100vh; width: 100vw; display: none;">
+          <br>
+          <h1 style="text-align: center;">` + a + `</h1>
+          <br>
+          <hr>
+          <br>
+          <br>
+          <div class="` + a.toLowerCase().replace(/\s+/g, '-') + ` container">
+            <div class="row row-` + a.toLowerCase().replace(/\s+/g, '-') + `"></div>
+          </div>
+          <br>
+          <br>
+        </div>`
+      );
+      $('.next-back').append(`
         <div class="nav-btns">
         <button class="btn btn-outline-danger btn-back btn-` + a.toLowerCase().replace(/\s+/g, '-') + `-back" data-page="body-div-` + a.toLowerCase().replace(/\s+/g, '-') + `" style="margin-left: 5%;"><i class="fa fa-chevron-left"></i> Back</button>
         <button class="btn btn-outline-success btn-next btn-` + a.toLowerCase().replace(/\s+/g, '-') + `-next" data-page="body-div-` + a.toLowerCase().replace(/\s+/g, '-') + `">Next <i class="fa fa-chevron-right"></i></button>
         </div>
-        <br>
-        <br>
-      </div>`
-    );
+      `);
+    }
     for (i = 0; i < b.length; i++) {
       sum += b[i];
     }
@@ -936,7 +960,7 @@ exports.text = function (a, b, c) {
 	if (init) {
 		count++;
 		$(a).append(
-			`<p class="text-` + count + `" style="text-align: center; font-size: ` + c + `">` + b + `</p>`
+			`<p class="text-` + count + `" style="text-align: center; font-size: ` + c + `pt;">` + b + `</p>`
 		);
 	}
 };
@@ -1224,7 +1248,7 @@ $(document).ready(function () {
         new Noty({
           text: 'Please complete all required fields.',
           type: 'error'
-        });
+        }).show();
         break;
       }
       reqTrue.push(true);
