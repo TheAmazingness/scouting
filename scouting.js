@@ -39,11 +39,13 @@ var fileExist = false;
 var filenameString;
 var required = [];
 var isSave = false;
+var standNav = [];
 // *****************************************************************************
 function save() {
   if (isSave) {
     manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
     if (isStand) {
+      json.team = team;
       fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
       if (manifest.indexOf('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json') === -1) {
         manifest.push('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json');
@@ -366,7 +368,7 @@ function requirement(req) {
 }
 // *****************************************************************************
 // Question Types:
-exports.checkbox = function (a, b, c, d, e) {
+exports.checkbox = function (a, b, c, d, e, f) {
   if (init) {
     count++;
     $(a).append(
@@ -384,7 +386,7 @@ exports.checkbox = function (a, b, c, d, e) {
       if (c[i]['text'] == undefined) {
         throw new Error('text cannot be undefined');
       }
-      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) +  ' scout-c btn-outline-' + style + '" data-key="' + d + '"><input type="checkbox" ' + val + ' autocomplete="off" style="display: none;">' + c[i]['text'] + '</span>');
+      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) +  ' scout-c scout-c-' + count + ' btn-outline-' + style + '" data-key="' + d + '"><input type="checkbox" ' + val + ' autocomplete="off" style="display: none;">' + c[i]['text'] + '</span>');
       if (color != undefined && color.indexOf('#') >= 0) {
         $('.btn-' + count + '-' + (i + 1))
           .css({color: color, borderColor: color})
@@ -412,11 +414,14 @@ exports.checkbox = function (a, b, c, d, e) {
     if (e) {
       required.push(d)
     }
+    if (f != undefined) {
+      $('.scout-c-' + count).addClass(f);
+    }
   } else {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.counter = function (a, b, c, d, e) {
+exports.counter = function (a, b, c, d, e, f) {
   if (init) {
     count++;
     $(a).append(
@@ -442,6 +447,52 @@ exports.counter = function (a, b, c, d, e) {
     });
     if (e) {
       required.push(d)
+    }
+    if (f != undefined) {
+      $('.co-' + count).addClass(f);
+    }
+  } else {
+    throw new Error('scout.init() not instantiated');
+  }
+};
+exports.cycle = function (a, b, c, d, e, f) {
+  if (init) {
+    $(a).append(`
+      <div class="cycle cy-` + count + `" style="text-align: center;">
+        <h3>` + b + `</h3>
+        <div class="btn-group cycle-group-` + count + `" data-toggle="buttons"></div>
+        <br>
+        <br>
+        <button type="button" class="btn btn-outline-success cycle-submit cycle-submit-` + count + `" data-key="` + d + `" data-count="` + count + `">Submit This Cycle</button>
+      </div>
+    `);
+    for (i = 0; i < c.length; i++) {
+      let color = c[i]['color'];
+      var val = c[i]['value'] != undefined ? 'value="' + c[i]['value'] + '"' : '';
+      var style = color.indexOf('#') < 0 ? color : 'info';
+      if (c[i]['text'] == undefined) {
+        throw new Error('text cannot be undefined');
+      }
+      if (c[i]['color'] == undefined) {
+        throw new Error('color cannot be undefined');
+      }
+      $('.cycle-group-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) + ' scout-cy scout-cy-' + count + ' btn-outline-' + style + '" data-key="' + d + '"><input type="radio" ' + val + ' autocomplete="off" style="display: none;">' + c[i]['text'] + '</span>');
+      if (color.indexOf('#') >= 0) {
+        $('.btn-' + count + '-' + (i + 1))
+          .css({color: color, borderColor: color})
+          .mouseenter(function () {
+            $(this).css({backgroundColor: color, color: 'white'});
+          })
+          .mouseleave(function () {
+            $(this).css({backgroundColor: '', color: color});
+          });
+      }
+    }
+    if (e) {
+      required.push(d);
+    }
+    if (f != undefined) {
+      $('.scout-cy-' + count).addClass(f);
     }
   } else {
     throw new Error('scout.init() not instantiated');
@@ -478,7 +529,7 @@ exports.counter = function (a, b, c, d, e) {
 //     throw new Error('scout.init() not instantiated');
 //   }
 // };
-exports.input = function (a, b, c, d, e) {
+exports.input = function (a, b, c, d, e, f) {
   if (init) {
     count++;
     $(a).append(
@@ -492,11 +543,14 @@ exports.input = function (a, b, c, d, e) {
     if (e) {
       required.push(d)
     }
+    if (f != undefined) {
+      $('.in-' + count).addClass(f);
+    }
   } else {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.radio = function (a, b, c, d, e) {
+exports.radio = function (a, b, c, d, e, f) {
   if (init) {
     count++;
     $(a).append(
@@ -517,7 +571,7 @@ exports.radio = function (a, b, c, d, e) {
       if (c[i]['color'] == undefined) {
         throw new Error('color cannot be undefined');
       }
-      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) + ' scout-mc btn-outline-' + style + '" data-key="' + d + '"><input type="radio" ' + val + ' autocomplete="off" style="display: none;">' + c[i]['text'] + '</span>');
+      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) + ' scout-mc scout-mc-' + count + ' btn-outline-' + style + '" data-key="' + d + '"><input type="radio" ' + val + ' autocomplete="off" style="display: none;">' + c[i]['text'] + '</span>');
       if (color.indexOf('#') >= 0) {
         $('.btn-' + count + '-' + (i + 1))
           .css({color: color, borderColor: color})
@@ -531,6 +585,9 @@ exports.radio = function (a, b, c, d, e) {
     }
     if (e) {
       required.push(d)
+    }
+    if (f != undefined) {
+      $('.scout-mc-' + count).addClass(f);
     }
   } else {
     throw new Error('scout.init() not instantiated');
@@ -591,7 +648,7 @@ exports.slider = function (a, b, c, d, e, f) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.textarea = function (a, b, c, d, e) {
+exports.textarea = function (a, b, c, d, e, f) {
   if (init) {
     count++;
     $(a).append(
@@ -605,6 +662,9 @@ exports.textarea = function (a, b, c, d, e) {
     if (e) {
       required.push(d)
     }
+    if (f != undefined) {
+      $('.txt-' + count).addClass(f);
+    }
   } else {
     throw new Error('scout.init() not instantiated');
   }
@@ -614,7 +674,7 @@ exports.textarea = function (a, b, c, d, e) {
 exports.chart = function (a, b) {
   return new Chart(a, b);
 };
-exports.done = function (a, b) {
+exports.done = function (a, b, c) {
   if (init) {
     count++;
     match++;
@@ -630,6 +690,9 @@ exports.done = function (a, b) {
       $(a).append(
         `<button class="btn btn-outline-success btn-done">Done!</button>`
       );
+    }
+    if (c != undefined) {
+      $('.done-' + count).addClass(c);
     }
   } else {
     throw new Error('scout.init() not instantiated');
@@ -829,7 +892,7 @@ exports.init = function (a, b) {
     throw new Error('scout.init() instantiated ' + initCount + ' times');
   }
 };
-exports.login = function (a, b) {
+exports.login = function (a, b, c) {
   if (init) {
     count++;
     var num = count;
@@ -879,7 +942,11 @@ exports.login = function (a, b) {
             .fadeIn();
           json.scout = act;
           save();
-          $('.btn-next, .btn-back').show();
+          if (isStand) {
+            $('.btn-next, .btn-back').show();
+          } else {
+            $('.btn-next').show();
+          }
           $('.num-change').text(scouts[act]);
         }
       } else if (act == b) {
@@ -891,11 +958,14 @@ exports.login = function (a, b) {
         }).show();
       }
     });
+    if (c != undefined) {
+      $('.l-' + num).addClass(c);
+    }
   } else {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.page = function (a, b) {
+exports.page = function (a, b, c) {
   if (init) {
     var sum = 0;
     if (!isStand) {
@@ -934,12 +1004,17 @@ exports.page = function (a, b) {
           <br>
         </div>`
       );
-      $('.next-back').append(`
-        <div class="nav-btns">
-        <button class="btn btn-outline-danger btn-back btn-` + a.toLowerCase().replace(/\s+/g, '-') + `-back" data-page="body-div-` + a.toLowerCase().replace(/\s+/g, '-') + `" style="margin-left: 5%;"><i class="fa fa-chevron-left"></i> Back</button>
-        <button class="btn btn-outline-success btn-next btn-` + a.toLowerCase().replace(/\s+/g, '-') + `-next" data-page="body-div-` + a.toLowerCase().replace(/\s+/g, '-') + `">Next <i class="fa fa-chevron-right"></i></button>
+      $('.next-back').replaceWith(`
+        <div class="nav-btns row">
+          <div class="col-sm-6">
+            <button class="btn btn-outline-danger btn-back btn-` + a.toLowerCase().replace(/\s+/g, '-') + `-back" data-page="body-div-` + a.toLowerCase().replace(/\s+/g, '-') + `" style="margin-left: 5%;"><i class="fa fa-chevron-left"></i> Back</button>
+          </div>
+          <div class="col-sm-6">
+            <button class="btn btn-outline-success btn-next btn-` + a.toLowerCase().replace(/\s+/g, '-') + `-next" data-page="body-div-` + a.toLowerCase().replace(/\s+/g, '-') + `">Next <i class="fa fa-chevron-right"></i></button>
+          </div>
         </div>
       `);
+      standNav.push('body-div-' + a.toLowerCase().replace(/\s+/g, '-'));
     }
     for (i = 0; i < b.length; i++) {
       sum += b[i];
@@ -952,17 +1027,25 @@ exports.page = function (a, b) {
       throw new Error('Numbers do not add up to 12: ' + a);
     }
     pages.push('body-div-' + a.toLowerCase().replace(/\s+/g, '-'));
+    if (c != undefined) {
+      $('body-div' + a.toLowerCase().replace(/\s+/g, '-')).addClass(c);
+    }
   } else {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.text = function (a, b, c) {
+exports.text = function (a, b, c, d) {
 	if (init) {
 		count++;
 		$(a).append(
 			`<p class="text-` + count + `" style="text-align: center; font-size: ` + c + `pt;">` + b + `</p>`
 		);
-	}
+    if (d != undefined) {
+      $('text-' + count).addClass(d);
+    }
+	} else {
+    throw new Error('scout.init() is not instantiated');
+  }
 };
 // *****************************************************************************
 // exports.concat = function (a, b) {
@@ -1197,48 +1280,87 @@ $(document).ready(function () {
     } else {
       cArr.splice(index, 1);
     }
-    eval('json.' + name + ' = [' + cArr + ']');
+    json[name] = cArr;
+    // eval('json.' + name + ' = [' + cArr + ']');
     save();
   });
   $('.scout-co').click(function () {
     var name = $(this).attr('data-key');
     var value = $('.' + $(this).attr('data-key') + '-co').val();
-    eval('json.' + name + ' = ' + value);
+    json[name] = value;
+    // eval('json.' + name + ' = ' + value);
     save();
   });
-  $('.scout-g').click(function () {
-    var key = $(this).parent().attr('data-group');
-    eval('json.' + key + ' = "' + $(this).text().toLowerCase().replace(/[\n\r]/g, '') + '"');
-    save();
+  $('.cycle-submit').click(function () {
+    var name = $(this).attr('data-key');
+    var countNum = $(this).attr('data-count');
+    $('.scout-cy-' + countNum).each(function () {
+      if ($(this).hasClass('active')) {
+        var value = $(this).attr('value') == undefined ? $(this).text() : $(this).attr('value');
+        if (json[name] == undefined) {
+          json[name] = [];
+        }
+        typeof value == 'string' && value != 'true' && value != 'false' ?
+          json[name].push('"' + value + '"') :
+          json[name].push(value);
+        save();
+      } else {
+        new Noty({
+          text: 'Please select a value',
+          type: 'error'
+        }).show();
+      }
+    });
   });
+  // $('.scout-g').click(function () {
+  //   var key = $(this).parent().attr('data-group');
+  //   eval('json.' + key + ' = "' + $(this).text().toLowerCase().replace(/[\n\r]/g, '') + '"');
+  //   save();
+  // });
   $('.scout-i').keyup(function () {
     var name = $(this).attr('data-key');
     var value = $(this).val();
-    eval('json.' + name + ' = "' + value + '"');
+    json[name] = value;
+    // eval('json.' + name + ' = "' + value + '"');
     save();
   });
   $('.scout-mc').click(function () {
     var name = $(this).attr('data-key');
     var value = $(this).children().attr('value') == undefined ? $(this).text() : $(this).children().val();
     typeof value == 'string' && value != 'true' && value != 'false' ?
-      eval('json.' + name + ' = "' + value + '"') :
-      eval('json.' + name + ' = ' + value);
+      /* eval('json.' + name + ' = "' + value + '"') */ json[name] = '"' + value + '"' :
+      json[name] = value;
+      // eval('json.' + name + ' = ' + value);
     save();
   });
   $('.scout-t').keyup(function () {
     var name = $(this).attr('data-key');
     var value = $(this).val();
-    eval('json.' + name + ' = "' + value + '"');
+    json[name] = value;
+    // eval('json.' + name + ' = "' + value + '"');
     save();
   });
 // *****************************************************************************
   $('.btn-back').click(function () {
     var page = $(this).attr('data-page');
     var index = pages.indexOf(page);
-    if (pages[index - 1] != undefined) {
-      $('.' + page).fadeOut(function () {
-        $('.' + pages[index - 1]).fadeIn();
-      });
+    if (!isStand) {
+      if (pages[index - 1] != undefined) {
+        $('.' + page).fadeOut(function () {
+          $('.' + pages[index - 1]).fadeIn();
+        });
+      }
+    } else {
+      if (pages[index - 1] == undefined) {
+        $(this).attr('data-page', pages[1]);
+      }
+      if (pages[index - 1] != undefined) {
+        $('.' + page).fadeOut(function () {
+          $('.' + pages[index - 1]).fadeIn();
+        });
+        $(this).attr('data-page', pages[index - 1]);
+        $('.btn-next').attr('data-page', pages[index - 1]);
+      }
     }
   });
   $('.btn-done').click(function () {
@@ -1266,6 +1388,10 @@ $(document).ready(function () {
       $('.' + page).fadeOut(function () {
         $('.' + pages[index + 1]).fadeIn();
       });
+      if (isStand) {
+        $(this).attr('data-page', pages[index + 1]);
+        $('.btn-back').attr('data-page', pages[index + 1]);
+      }
     }
   });
 // *****************************************************************************
@@ -1299,8 +1425,13 @@ $(document).ready(function () {
   $('.' + pages[0]).show();
   $('.page-pane').each(function () {
     if ($(this).attr('class').substr(10) == pages[0]) {
-      $('.btn-' + $(this).attr('class').substr(19) + '-back').remove();
-      $('.btn-' + $(this).attr('class').substr(19) + '-next').css('margin-left', '5%');
+      if (!isStand) {
+        $('.btn-' + $(this).attr('class').substr(19) + '-back').remove();
+        $('.btn-' + $(this).attr('class').substr(19) + '-next').css('margin-left', '5%');
+      } else {
+        $('.btn-' + $(this).attr('class').substr(19) + '-back').hide();
+        $('.btn-' + $(this).attr('class').substr(19) + '-next').css('margin-left', '5%');
+      }
     }
     if ($(this).attr('class').substr(10) == pages[pages.length - 1]) {
       $('.btn-' + $(this).attr('class').substr(19) + '-next').remove();

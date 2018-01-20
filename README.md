@@ -44,10 +44,11 @@ And this at the end of the `<body>` before your .js file:
       }
     ],
     'jsonkey',
-    true
+    true,
+    'optional-classes'
   );
 ```
-Checkboxes that default to `btn-outline-info` but color can be changed to the different Bootstrap color classes or a hexadecimal color value (no names or RGB values yet). The color and value keys are optional, but text is required. The last boolean is whether or not the question is required.
+Checkboxes that default to `btn-outline-info` but color can be changed to the different Bootstrap color classes or a hexadecimal color value (no names or RGB values yet). The color and value keys are optional, but text is required. The boolean is whether or not the question is required. The last argument is not required and is for optional classes separated by spaces.
 ### Counter:
 ```javascript
   scout.counter(
@@ -56,10 +57,33 @@ Checkboxes that default to `btn-outline-info` but color can be changed to the di
     // Increment
     1,
     'jsonkey',
-    true
+    true,
+    'optional-classes'
   );
 ```
-A counter that has buttons to increment up and down. The up and down values can be customized and floats are not supported. The last boolean is whether or not the question is required.
+A counter that has buttons to increment up and down. The up and down values can be customized and floats are not supported. The boolean is whether or not the question is required. The last argument is not required and is for optional classes separated by spaces.
+### Counter:
+```javascript
+  scout.cycle(
+    '.place-to-put',
+    'Title',
+    [
+      {
+        text: 'This is displayed',
+        color: 'This can be a Bootstrap color class or a hexadecimal color value (no names or RGB values yet)',
+        value: 'Default value is the displayed text, but can manually set the value here.'
+      },
+      {
+        text: 'This is the second option. This has no value so the value will be this text.',
+        color: '#abcdef'
+      }
+    ],
+    'jsonkey',
+    true,
+    'optional-classes'
+  );
+```
+A group of radio buttons that contains a submit button so the user can input value multiple times. The boolean is whether or not the question is required. The last argument is not required and is for optional classes separated by spaces.
 ### Input:
 ```javascript
   scout.input(
@@ -67,10 +91,11 @@ A counter that has buttons to increment up and down. The up and down values can 
     'Title',
     'Placeholder'
     'jsonkey',
-    true
+    true,
+    'optional-classes'
   );
 ```
-An HTML `<input>` that saves automatically. The last boolean is whether or not the question is required.
+An HTML `<input>` that saves automatically. The boolean is whether or not the question is required. The last argument is not required and is for optional classes separated by spaces.
 ### Radio Buttons:
 ```javascript
   scout.radio(
@@ -88,10 +113,11 @@ An HTML `<input>` that saves automatically. The last boolean is whether or not t
       }
     ],
     'jsonkey',
-    true
+    true,
+    'optional-classes'
   );
 ```
-Radio buttons that is customizable with as many choices as possible. Text and color is required, but value is not. If no value is provided, the value defaults to the text. The last boolean is whether or not the question is required.
+Radio buttons that is customizable with as many choices as possible. Text and color is required, but value is not. If no value is provided, the value defaults to the text. The boolean is whether or not the question is required. The last argument is not required and is for optional classes separated by spaces.
 ### Noty:
 Taken from [Noty](https://www.npmjs.com/package/noty)
 ```javascript
@@ -129,10 +155,11 @@ A slider simplified from noUiSlider. The last boolean is whether or not the ques
     'Title',
     'Placeholder'
     'jsonkey',
-    true
+    true,
+    'optional-classes'
   );
 ```
-An HTML `<textarea>` that saves automatically as you type. The last boolean is whether or not the question is required.
+An HTML `<textarea>` that saves automatically as you type. The boolean is whether or not the question is required. The last argument is not required and is for optional classes separated by spaces.
 
 ## Other Useful Functions:
 ### Chart.js:
@@ -148,18 +175,20 @@ Returns a chart.js object. `ctx` is the `<canvas>` element where the chart will 
 ```javascript
   scout.done(
     '.place-to-put',
-    false
+    false,
+    'optional-classes'
   );
 ```
-A done button that saves the file and refreshes the app. The second argument is optional and defaults to `true`. If true, then the done button will replace the next button, and if false, then the done button will float.
+A done button that saves the file and refreshes the app. The second argument is optional and defaults to `true`. If true, then the done button will replace the next button, and if false, then the done button will float. The last argument is not required and is for optional classes separated by spaces.
 ### Login:
 ```javascript
   scout.login(
     '.place-to-put',
-    1540 // Code to access the change role page. Only numbers.
+    1540, // Code to access the change role page. Only numbers.
+    'optional-classes'
   );
 ```
-A login prompt that removes the back/next buttons and shows them when logged in. Make sure there is a `scouts.json` file present in the scouting directory (`../scouting/`) that contains key value pairs for members to login. The key should be an integer, and the value should be the name to display once logged in. `scout.login()` still needs to go inside a `scout.page()`; it does not automatically generate a page.
+A login prompt that removes the back/next buttons and shows them when logged in. Make sure there is a `scouts.json` file present in the scouting directory (`../scouting/`) that contains key value pairs for members to login. The key should be an integer, and the value should be the name to display once logged in. `scout.login()` still needs to go inside a `scout.page()`; it does not automatically generate a page. The last argument is not required and is for optional classes separated by spaces.
 ### Pie:
 Simplified from [Chart.js](https://www.npmjs.com/package/chartjs)
 ```javascript
@@ -177,21 +206,23 @@ A pie chart simplified from Chart.js.
 ```javascript
   scout.page(
     'Title',
-    [6, 6]
+    [6, 6],
+    'optional-classes'
   );
 ```
 Creates a new page with back/next buttons. Does not have a back button if it is the first page, and likewise does not have a next button if it is the next page. Also does not have a next button if a done button replaces it.
 NAMING CONVENTION: .cell-title-1 <-- 1 is the leftmost cell, array.length is the rightmost cell
 Uses the Bootstrap grid system. Numbers must add up to twelve.
+The last argument is not required and is for optional classes separated by spaces.
 ### Text:
 ```javascript
   scout.text(
   	'.place-to-put',
-  	'Text',
-  	'Font size'
+  	'Text', // Point font
+  	'Font size',
+    'optional-classes'
   );
 ```
-
 ## Database:
 ### Database:
 ```javascript
@@ -203,9 +234,13 @@ Make sure there is a good internet connection the first time `scout.database()` 
 ## Changelog
 
 ### 2.0.7 (2018-01-)
+* Added: Cycle question option.
+* Added: Optional classes.
 * Added: Required questions.
+* Added: fs-extra dependency.
 * Added: Option to not save files.
 * Fixed: Saving files.
+* Fixed: Changed placement of next and back buttons for `scout.init('stand')`
 
 ### 2.0.6 (2018-01-07)
 * Fixed: `scout.blank()`.
