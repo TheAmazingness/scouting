@@ -40,7 +40,23 @@ var filenameString;
 var required = [];
 var isSave = false;
 var standNav = [];
+var settings = false;
+var uuid = "66216088-cc64-4a35-969f-58336ef03732" // for bluetooth
 // *****************************************************************************
+function addSettings() {
+	if (!settings) { //if (init && !settings)
+		settings=true;
+		$("body").append(
+			`<div style="position:absolute;top:2vw;left:2vw;" class="dropdown">
+				<button type="button" id="dropdownMenuButton" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    			Settings
+  				</button>
+  				<div class="dropdown-menu settings-menu" aria-labelledby="dropdownMenuButton">
+  				</div>
+			</div>`
+		);
+	}
+}
 function save() {
   if (isSave) {
     manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
@@ -1047,6 +1063,30 @@ exports.text = function (a, b, c, d) {
     throw new Error('scout.init() is not instantiated');
   }
 };
+exports.flashdrive = function() {
+	// if (init) {
+		addSettings();
+ 		$(".settings-menu").append(
+			`<a class="dropdown-item save-to-flash" href="#">Save to Flashdrive</a>`
+		);
+	// }
+}
+exports.update = function() {
+	// if (init) {
+		addSettings();
+		$(".settings-menu").append(
+			`<a class="dropdown-item update" href="#">Update</a>`
+		);
+	// }
+};
+exports.bluetooth = function() {
+  // if (init) {
+    addSettings();
+    $(".settings-menu").append(
+      `<a class="dropdown-item bluetooth" href="#">Bluetooth Sync</a>`
+    );
+  // }
+}
 // *****************************************************************************
 // exports.concat = function (a, b) {
 //   if (a == 'stand' || a == 'pit') {
@@ -1420,6 +1460,60 @@ $(document).ready(function () {
     role = $('.btn-role:checked').val();
     fs.writeFileSync('./scouting/role.txt', role);
     window.location.reload();
+  });
+// *****************************************************************************
+  $('.save-to-flash').click(function () {
+  	var PSpath = "";
+  	var dirpath = "";
+  	if (isStand) {
+  		PSpath = "stand-scouting";
+  	} else {
+  		PSpath = "pit-scouting";
+  	}
+	  var manifest;
+	  if (fs.existsSync('data/manifest.json')) {
+		    manifest = JSON.parse(fs.readFileSync("data/manifest.json"));
+	  } else {
+		    manifest = []
+	  }
+	  if (navigator.platform=="MacIntel") {
+		    dirpath = "/Volumes/1540";
+	  } else if (navigator.platform=="Win32") {
+		    if (fs.existsSync("K:/companal")) {
+			       dirpath = "K:";
+		    } else if (fs.existsSync("D:/companal")) {
+			       dirpath = "D:";
+		    }
+	  }
+	  if (fs.existsSync(dirpath)) {
+		    var array = JSON.parse(fs.readFileSync(data+"/companal/"+PSpath+"/manifest.json"));
+		    for (x in manifest) {
+			       if (!fs.existsSync(data+"/companal/"+PSpath+"/"+manifest[x])) {
+				           array.push(manifest[x]);
+				           fs.copySync('data/'+manifest[x], data+'/companal/'+PSpath+'/'+manifest[x]);
+			       }
+		    }
+		    fs.writeFileSync(dirpath+"/companal/"+PSpath+"/"+JSON.stringify(array));
+		    console.log("Files saved!");
+	  } else {
+		    console.log("The flashdrive 1540 is not inputed into the tablet.");
+	  }
+  });
+  // *****************************************************************************
+  $('.update').click(function () {
+	   if (navigator.onLine) {
+  		exec("git reset --hard");
+  		exec("git pull");
+  		exec("npm uninstall scouting");
+  		exec("npm install scouting --save");
+  		setTimeout(window.location.reload(),2000);
+	   } else {
+		  console.log("You don't have internet connection!");
+	   }
+  });
+// *****************************************************************************
+  $('.bluetooth').click(function () {
+    exec("python Windows_Bluetooth_Client.py addr file "+uuid);
   });
 // *****************************************************************************
   $('.' + pages[0]).show();
