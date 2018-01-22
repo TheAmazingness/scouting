@@ -2,23 +2,28 @@
 # Currently, Only Works For Pit Scouting App & Windows Computers
 
 from bluetooth import *
-import sys
+import sys, time
 
 if sys.version < '3':
     input = raw_input
 
 if not len(sys.argv) == 4:
     raise ValueError('Too few/many arguments specified!\nUsage: '+sys.argv[0]+' <device_address> <message>')
-addr = sys.argv[1]
-if not is_valid_address(addr):
-    raise ValueError('Invalid address! Should be something like "30:52:CB:81:24:92". You specified '+addr)
-message = sys.argv[2]
 
-uuid = sys.argv[3]
+uuid = sys.argv[1]
+addr = sys.argv[2]
+if not is_valid_address(addr):
+    addr = None
+message = sys.argv[3]
+
+
 service_matches = find_service(uuid=uuid, address=addr)
 
 if len(service_matches) == 0:
-    raise ValueError('Server not found! Make sure address and uuid of the server match, and that the server is running!')
+    addr = None
+    service_matches = find_service(uuid=uuid, address=addr)
+    if len(service_matches) == 0:
+        raise ValueError('Server not found! Make sure address and uuid of the server match, and that the server is running!')
 
 first_match = service_matches[0]
 port = first_match["port"]
@@ -29,5 +34,7 @@ sock = BluetoothSocket(RFCOMM)
 sock.connect((host, port))
 
 sock.send(message)
+time.sleep(.1)
+sock.send("end")
 
 sock.close()
