@@ -42,6 +42,7 @@ var isSave = false;
 var standNav = [];
 var settings = false;
 var uuid = "66216088-cc64-4a35-969f-58336ef03732" // for bluetooth
+var addr = "80:19:34:19:20:FC"
 // *****************************************************************************
 function addSettings() {
 	if (!settings) { //if (init && !settings)
@@ -1513,7 +1514,23 @@ $(document).ready(function () {
   });
 // *****************************************************************************
   $('.bluetooth').click(function () {
-    exec("python Windows_Bluetooth_Client.py addr file "+uuid);
+		if (fs.existsSync("data/manifest.json")) {
+			m = JSON.parse(fs.readFileSync("data/manifest.json"));
+			for (stuff in m) {
+				if (fs.existsSync("data/"+m[stuff])) {
+					data = JSON.stringify(JSON.parse(fs.readFileSync("data/"+m[stuff])))
+					try {
+						exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
+					} catch(_) {
+						try {
+							exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
+						} catch(_) {
+							console.log("lol you failed")
+						}
+					}
+				}
+			}
+		}
   });
 // *****************************************************************************
   $('.' + pages[0]).show();
