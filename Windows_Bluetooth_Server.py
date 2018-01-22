@@ -1,8 +1,6 @@
-# Written By Liam Wang and Dylan Smith
-# Currently, Only Works For Pit Scouting App & Windows Computers
-
 from bluetooth import *
 import json
+import urllib
 
 server_sock = BluetoothSocket(RFCOMM)
 server_sock.bind(("", PORT_ANY))
@@ -33,6 +31,8 @@ while True:
     except IOError:
         pass
 
+    message = urllib.unquote(message)
+    print message
     jsonMessage = json.loads(message)
 
     name = jsonMessage["teamNumber"] + ".json"
