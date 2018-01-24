@@ -74,12 +74,12 @@ function save() {
       }
     } else {
       if (!fileExist) {
-        filename = new Noty({
-          text: 'Filename: <input class="form-control filename" type="text">',
-          type: 'success',
-          closeWith: ['button'],
-          layout: 'center'
-        }).show();
+        // filename = new Noty({
+        //   text: 'Filename: <input class="form-control filename" type="text">',
+        //   type: 'success',
+        //   closeWith: ['button'],
+        //   layout: 'center'
+        // }).show();
         $('.filename').keyup(function () {
           if (event.which == 13) {
             filenameString = $(this).val();
@@ -250,6 +250,37 @@ function importStand() {
 		}).show();
  	}
 }
+function reload() {
+	createTables()
+	//importing stand data
+	if (fs.existsSync("data-collect/stand-scouting/manifest.json")) {
+		manifest = fs.readFileSync("data-collect/stand-scouting/manifest.json");
+		for (var team in manifest) {
+			var t = manifest[team]
+			if (fs.existsSync("data-collect/stand-scouting/"+t)) {
+				var data = JSON.parse(fs.readFileSync('data-collect/stand-scouting/'+t));
+				$('#m' + data.matchNumber + data.role).css('background-color', 'blue');
+				$('#m' + data.matchNumber + data.role).css('color', 'white');
+				addToTotal(data.scoutId,'stand');
+			}
+		}
+	}
+	//importing pit data
+	if (fs.existsSync("data-collect/pit-scouting/manifest.json")) {
+		manifest = fs.readFileSync("data-collect/pit-scouting/manifest.json");
+		for (var team in manifest) {
+			var t = manifest[team]
+			if (fs.existsSync("data-collect/pit-scouting/"+t)) {
+				var data = JSON.parse(fs.readFileSync('data-collect/pit-scouting/'+t));
+				addToTotal(data.scoutIds[0], 'pit');
+				scoutTwo = findScout(data.scoutIds[1]);
+				if (scoutTwo!=null) {
+					addToTotal(scoutTwo.id, 'pit');
+				}
+			}
+		}
+	}
+}
 function exportData() {
 	if (fs.existsSync('/Volumes/1540/companal/output')) {
 		fs.copySync('data-collect/stand-scouting/', '/Volumes/1540/companal/output/stand-scouting/');
@@ -279,17 +310,20 @@ function resetTables() {
 	$('.matches').removeClass('act');
 	$('.schedule').removeClass('act');
 }
-function createTables(a) {
+function createTables() {
+	$("#membersBody").html("<tbody id='membersBody'></tbody>")
+	$("#matchBody").html("<tbody id='matchBody'></tbody>")
+	$("#scheduleBody").html("<tbody id='scheduleBody'></tbody>")
 	// Members Table
 	for (x in scoutList) {
 		var id = scoutList[x].id;
 		var rs = '#' + id + 'row';
 		var scout = scoutList[x];
-		$('#tbody').append('<tr id="' + id + 'row"></tr>');
+		$('#membersBody').append('<tr id="' + id + 'row"></tr>');
 		if (scout.total < scout.req) {
 			$(rs).append('<td id="' + id + 'req">' + (scout.req - scout.total) + ' more matches</td>');
 		} else {
-			$(rs).append('<td id="' + id + 'req"> style="background-color:#F5FFBF">Completed</td>');
+			$(rs).append('<td id="' + id + 'req" style="background-color:#F5FFBF">Completed</td>');
 		}
 		$(rs).append('<td id="' + id + 'id">' + id + '</td>');
 		$(rs).append('<td id="' + id + 'name">' + scout.name + '</td>');
@@ -297,45 +331,46 @@ function createTables(a) {
 		$(rs).append('<td id="' + id + 'num2">' + scout.stand + '</td>');
 		$(rs).append('<td id="' + id + 'num3">' + scout.total + '</td>');
 	}
-	// Teams Table
-  if (fs.existsSync('scouting/database.json')) {
-    teams = fs.readFileSync('scouting/database.json');
-  } else {
-    teams = JSON.parse(exec('curl -X GET "https://www.thebluealliance.com/api/v3/event/' + a + '/teams/simple" -H "accept: application/json" -H "X-TBA-Auth-Key: p2nxGJxqkJo5a8clThWbi1ZNQhy8CaKlJd4YM5TOFgbR4d7y4KLFU1RWhLANpM8N"', {encoding: 'utf-8'}));
-  }
-	for (x in teams) {
-		var tr = document.createElement('tr');
-		tr.setAttribute('id','r' + team + 'row');
-		$('#robotBody').append(tr);
-		var name = document.createElement('td');
-		name.setAttribute('id','r' + team + 'bot');
-		$('#r' + teams[x].team_number + '-row').append(name);
-		$('#r' + teams[x].team_number + 'bot').text(team);
-		var aname = document.createElement('td');
-		aname.setAttribute('id','r' + team + 'nm');
-		$('#r' + teams[x].team_number + 'row').append(aname);
-		$('#r' + teams[x].team_number + 'nm').text(teams[x].nickname);
-		var pit = document.createElement('td');
-		pit.setAttribute('id','r' + team + 'pit');
-		$('#r' + teams[x].team_number + 'row').append(pit);
-		$('#r' + teams[x].team_number + 'pit').text('False');
-		$('#r' + teams[x].team_number + 'pit').css('background-color','#ffdad1');
-		var stand = document.createElement('td');
-		stand.setAttribute('id','r' + team + 'stand');
-		$('#r' + teams[x].team_number + 'row').append(stand);
-		$('#r' + teams[x].team_number + 'stand').text('0');
-	}
+	// // Teams Table
+  // if (fs.existsSync('scouting/database.json')) {
+  //   teams = fs.readFileSync('scouting/database.json');
+  // } else {
+  //   teams = JSON.parse(exec('curl -X GET "https://www.thebluealliance.com/api/v3/event/' + a + '/teams/simple" -H "accept: application/json" -H "X-TBA-Auth-Key: p2nxGJxqkJo5a8clThWbi1ZNQhy8CaKlJd4YM5TOFgbR4d7y4KLFU1RWhLANpM8N"', {encoding: 'utf-8'}));
+  // }
+	// for (x in teams) {
+	// 	var tr = document.createElement('tr');
+	// 	tr.setAttribute('id','r' + team + 'row');
+	// 	$('#robotBody').append(tr);
+	// 	var name = document.createElement('td');
+	// 	name.setAttribute('id','r' + team + 'bot');
+	// 	$('#r' + teams[x].team_number + '-row').append(name);
+	// 	$('#r' + teams[x].team_number + 'bot').text(team);
+	// 	var aname = document.createElement('td');
+	// 	aname.setAttribute('id','r' + team + 'nm');
+	// 	$('#r' + teams[x].team_number + 'row').append(aname);
+	// 	$('#r' + teams[x].team_number + 'nm').text(teams[x].nickname);
+	// 	var pit = document.createElement('td');
+	// 	pit.setAttribute('id','r' + team + 'pit');
+	// 	$('#r' + teams[x].team_number + 'row').append(pit);
+	// 	$('#r' + teams[x].team_number + 'pit').text('False');
+	// 	$('#r' + teams[x].team_number + 'pit').css('background-color','#ffdad1');
+	// 	var stand = document.createElement('td');
+	// 	stand.setAttribute('id','r' + team + 'stand');
+	// 	$('#r' + teams[x].team_number + 'row').append(stand);
+	// 	$('#r' + teams[x].team_number + 'stand').text('0');
+	// }
 	// Match Table
 	for (match = 1; match <= Object.keys(matchSchedule).length; match++) {
 		var rs = '#m' + match + 'row';
 		$('#matchBody').append('<tr id="m' + match + 'row"></tr>');
 		$(rs).append('<td id="m' + match + 'num">' + match + '</td>');
-    for (i = 0; i < 5; i++) {
-      if (i <= 2) {
-        $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r' + i + '">False</td>');
-      } else {
-        $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b' + i + '">False</td>');
-      }
+		all = "r" //alliance
+    for (i = 1; i < 4; i++) {
+      $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + all + i + '">False</td>');
+      if (all=="r" && i==3) {
+				i=0
+				all="b"
+			}
     }
 		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r1">False</td>');
 		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r2">False</td>');
@@ -871,6 +906,7 @@ exports.init = function (a, b) {
         layout: 'center'
       }).show();
     } else if (a == 'database') {
+			init = true
       if (!fs.existsSync('./data-collect')) {
         fs.mkdirSync('./data-collect');
       }
@@ -1112,7 +1148,8 @@ exports.bluetooth = function() {
 //   }
 // };
 // *****************************************************************************
-exports.database = function (a) {
+exports.database = function () {
+	exec("C:/Python27/python.exe Windows_Bluetooth_Server.py")
 	importScouts();
 	importSchedule();
 	setExemptions(exemptionReq);
@@ -1156,30 +1193,23 @@ exports.database = function (a) {
 			</style>`
 		);
 		$('body').append(`
+			<br><br><br><br><br><br><br><br><br>
 			<nav class='center' style='background-color:#ededed;z-index:1;width:100%' data-spy='affix'>
         <br>
 				<h2 style='position:relative;top:14px;'>Database App</h2>
 				<br>
-				<button class='btn-warning btn pit' type='button' class='btn-primary btn.lg'>Import Pit Data</button>
-				<button class='btn-warning btn stand' type='button' class='btn-primary btn.lg'>Import Stand Data</button>
-				<button class='btn-success btn export' type='button' class='btn-primary btn.lg'>Export Data</button>
+				<!--<button class='btn-warning btn pit' type='button'>Import Pit Data</button>
+				<button class='btn-warning btn stand' type='button'>Import Stand Data</button>-->
+				<button class='btn-danger btn reload' type='button'>Reload</button>
+				<button class='btn-success btn export' type='button'>Export Data</button>
 				<br>
 				<br>
 				<button class='sect act btn-primary btn members' type='button' style='margin-bottom: 10px;'>Members</button>
-				<button class='sect btn-primary btn teams' type='button' style='margin-bottom: 10px;'>Teams</button>
+			 	<!--<button class='sect btn-primary btn teams' type='button' style='margin-bottom: 10px;'>Teams</button>-->
 				<button class='sect btn-primary btn matches' type='button' style='margin-bottom: 10px;'>Matches</button>
 				<button class='sect btn-primary btn schedule' type='button' style='margin-bottom:10px'>Match Schedule</button>
 				<br>
 			</nav>
-			<br>
-      <br>
-      <br>
-      <br>
-      <br>
-      <br>
-      <br>
-      <br>
-      <br>
 			<div id='members' class='center'>
 				<h3>Members</h3>
 				<table style='width: 80%;border: 3px black solid; margin-left: auto; margin-right: auto;' id='scoutingTable' border='1' class='center-block table table-hover table-bordered'>
@@ -1193,11 +1223,11 @@ exports.database = function (a) {
     						<th>Total Scouted</th>
 						</tr>
 					</thead>
-					<tbody id='tbody'>
+					<tbody id='membersBody'>
 					</tbody>
 				</table>
 			</div>
-			<div hidden id='teams' class='center'>
+			<!--<div id='teams' class='center'>
 				<h3>Teams</h3>
 				<table style='width: 80%;border: 3px black solid; margin-left: auto; margin-right;' id='robotTable' border='1' class='center-block table table-hover table-bordered'>
 					<thead>
@@ -1211,8 +1241,8 @@ exports.database = function (a) {
 					<tbody id='robotBody'>
 					</tbody>
 				</table>
-			</div>
-			<div hidden id='matches' class='center'>
+			</div>-->
+			<div id='matches' class='center'>
 				<h3>Scouted Matches</h3>
 				<table style='width: 80%;border: 3px black solid; margin-left: auto; margin-right: auto;' id='matchTable' border='1' class='center-block table table-hover table-bordered'>
 					<thead>
@@ -1230,7 +1260,7 @@ exports.database = function (a) {
 					</tbody>
 				</table>
 			</div>
-			<div hidden id='schedule' class='center'>
+			<div id='schedule' class='center'>
 				<h3>Match Schedule</h3>
 				<table style='width: 80%;border: 3px black solid; margin-left: auto; margin-right: auto;' id='scheduleTable' border='1' class='center-block table table-hover table-bordered'>
 					<thead>
@@ -1263,11 +1293,11 @@ exports.database = function (a) {
 			$('#members').show();
 			$('.members').addClass('act');
 		});
-		$('.teams').click(function(){
-			resetTables();
-			$('#teams').show();
-			$('.teams').addClass('act');
-		});
+		// $('.teams').click(function(){
+		// 	resetTables();
+		// 	$('#teams').show();
+		// 	$('.teams').addClass('act');
+		// });
 		$('.matches').click(function(){
 			resetTables();
 			$('#matches').show();
@@ -1278,7 +1308,8 @@ exports.database = function (a) {
 			$('#schedule').show();
 			$('.schedule').addClass('act');
 		});
-		createTables(a);
+		createTables();
+		resetTables();
 		// Load Stand
 		for (x in manifestStand) {
 			if (fs.existsSync('data-collect/stand-scouting/' + manifestStand[x])) {
