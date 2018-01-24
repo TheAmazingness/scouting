@@ -44,6 +44,8 @@ var settings = false;
 var uuid = "66216088-cc64-4a35-969f-58336ef03732" // for bluetooth
 var addr = "80:19:34:19:20:FC"
 // *****************************************************************************
+// Given that there is no settings dropdown button, addSettings() creates a dropdown menu.
+// Otherwise, this function does nothing
 function addSettings() {
 	if (!settings) { //if (init && !settings)
 		settings=true;
@@ -133,6 +135,11 @@ function pitTeamEL() {
     }
   });
 };
+
+//literally just a contains function
+//a is a list
+//obj is an object that you are checking to see if it is in the list
+//returns true if object is in list
 function contains(a, obj) {
 	var i = a.length;
 	while (i--) {
@@ -142,6 +149,8 @@ function contains(a, obj) {
 	}
 	return false;
 }
+
+//a class for a scout
 function Scout(name,id) {
 	this.name = name;
 	this.id = id;
@@ -151,6 +160,8 @@ function Scout(name,id) {
 	this.total = 0;
 	this.exempt = false;
 }
+
+//imports scouts from scouts.json, for database app
 function importScouts() {
 	var file = JSON.parse(fs.readFileSync('data-collect/scouts.json'));
 	var keys = Object.keys(file);
@@ -158,9 +169,13 @@ function importScouts() {
 		scoutList.push(new Scout(file[keys[x]],keys[x]));
 	}
 }
+
+//imports schedule from schedule.json, for database app
 function importSchedule() {
 	matchSchedule = JSON.parse(fs.readFileSync('data-collect/schedule.json'));
 }
+
+//imports the number of matches each member has to scout from exempt.json, for database app
 function setExemptions() {
 	var file = JSON.parse(fs.readFileSync('data-collect/exempt.json'));
 	for (x in scoutList) {
@@ -174,82 +189,85 @@ function setExemptions() {
 		}
 	}
 }
-function importPitManifest() {
-	if (fs.existsSync('data-collect/pit-scouting/manifest.json')) {
-		manifestPit = JSON.parse(fs.readFileSync('data-collect/pit-scouting/manifest.json'));
-	} else {
-    new Noty({
-      text: 'No manifest.json file for pit scouting',
-      type: 'error'
-    }).show();
-	}
-}
-function importStandManifest() {
-	if (fs.existsSync('data-collect/stand-scouting/manifest.json')) {
-		manifestStand = JSON.parse(fs.readFileSync('data-collect/stand-scouting/manifest.json'));
-	} else {
-    new Noty({
-      text: 'No manifest.json file for stand scouting',
-      type: 'error'
-    }).show();
-	}
-}
-function importPit() {
-	if (fs.existsSync('/Volumes/1540/companal/pit-scouting/manifest.json')) {
-		var manifest = JSON.parse(fs.readFileSync('/Volumes/1540/companal/pit-scouting/manifest.json'));
-		for (var team in manifest) {
-			if (!fs.existsSync('data-collect/pit-scouting/' + manifest[team]) && fs.existsSync('/Volumes/1540/companal/pit-scouting/' + manifest[team])) {
-				var dataJSON = fs.readFileSync('/Volumes/1540/companal/pit-scouting/' + manifest[team]);
-				var data = JSON.parse(dataJSON);
-				scoutOne = findScout(data.scoutIds[0]);
-				addToTotal(scoutOne.id, 'pit');
-				scoutTwo = findScout(data.scoutIds[1]);
-				if (scoutTwo!=null) {
-					addToTotal(scoutTwo.id, 'pit');
-				}
-				manifestPit.push(manifest[team]);
-				fs.writeFileSync('data-collect/pit-scouting/manifest.json',JSON.stringify(manifestPit));
-				fs.writeFileSync('data-collect/pit-scouting/' + manifest[team],dataJSON);
-			}
-		}
-		new Noty({
-			text: 'Done importing data!',
-			type: 'success'
-		}).show();
-	} else {
-		new Noty({
-			text: 'There is no flashdrive at /Volumes/1540/.',
-			type: 'error'
-		}).show();
-	}
-}
-function importStand() {
- 	if (fs.existsSync('/Volumes/1540/companal/stand-scouting/manifest.json')) {
- 		var manifest = JSON.parse(fs.readFileSync('/Volumes/1540/companal/stand-scouting/manifest.json'));
-		for (var team in manifest) {
-			if (!fs.existsSync('data-collect/stand-scouting/' + manifest[team]) && fs.existsSync('/Volumes/1540/companal/stand-scouting/' + manifest[team])) {
-				var dataJSON = fs.readFileSync('/Volumes/1540/companal/stand-scouting/' + manifest[team]);
-				var data = JSON.parse(dataJSON);
-				$('#m' + data.matchNumber + data.role).css('background-color', 'blue');
-				$('#m' + data.matchNumber + data.role).css('color', 'white');
-				$('#m' + data.matchNumber + data.role).text(findScout(data.scoutId).name);
-				addToTotal(data.scoutId,' stand');
-				manifestStand.push(manifest[team]);
-				fs.writeFileSync('data-collect/stand-scouting/manifest.json', JSON.stringify(manifestStand));
-				fs.writeFileSync('data-collect/stand-scouting/' + manifest[team],dataJSON);
-			}
-		}
-		new Noty({
-			text: 'Done importing data!',
-			type: 'success'
-		}).show();
- 	} else {
-		new Noty({
-			text: 'There is no flashdrive at /Volumes/1540/.',
-			type: 'error'
-		}).show();
- 	}
-}
+
+// function importPitManifest() {
+// 	if (fs.existsSync('data-collect/pit-scouting/manifest.json')) {
+// 		manifestPit = JSON.parse(fs.readFileSync('data-collect/pit-scouting/manifest.json'));
+// 	} else {
+//     new Noty({
+//       text: 'No manifest.json file for pit scouting',
+//       type: 'error'
+//     }).show();
+// 	}
+// }
+// function importStandManifest() {
+// 	if (fs.existsSync('data-collect/stand-scouting/manifest.json')) {
+// 		manifestStand = JSON.parse(fs.readFileSync('data-collect/stand-scouting/manifest.json'));
+// 	} else {
+//     new Noty({
+//       text: 'No manifest.json file for stand scouting',
+//       type: 'error'
+//     }).show();
+// 	}
+// }
+// function importPit() {
+// 	if (fs.existsSync('/Volumes/1540/companal/pit-scouting/manifest.json')) {
+// 		var manifest = JSON.parse(fs.readFileSync('/Volumes/1540/companal/pit-scouting/manifest.json'));
+// 		for (var team in manifest) {
+// 			if (!fs.existsSync('data-collect/pit-scouting/' + manifest[team]) && fs.existsSync('/Volumes/1540/companal/pit-scouting/' + manifest[team])) {
+// 				var dataJSON = fs.readFileSync('/Volumes/1540/companal/pit-scouting/' + manifest[team]);
+// 				var data = JSON.parse(dataJSON);
+// 				scoutOne = findScout(data.scoutIds[0]);
+// 				addToTotal(scoutOne.id, 'pit');
+// 				scoutTwo = findScout(data.scoutIds[1]);
+// 				if (scoutTwo!=null) {
+// 					addToTotal(scoutTwo.id, 'pit');
+// 				}
+// 				manifestPit.push(manifest[team]);
+// 				fs.writeFileSync('data-collect/pit-scouting/manifest.json',JSON.stringify(manifestPit));
+// 				fs.writeFileSync('data-collect/pit-scouting/' + manifest[team],dataJSON);
+// 			}
+// 		}
+// 		new Noty({
+// 			text: 'Done importing data!',
+// 			type: 'success'
+// 		}).show();
+// 	} else {
+// 		new Noty({
+// 			text: 'There is no flashdrive at /Volumes/1540/.',
+// 			type: 'error'
+// 		}).show();
+// 	}
+// }
+// function importStand() {
+//  	if (fs.existsSync('/Volumes/1540/companal/stand-scouting/manifest.json')) {
+//  		var manifest = JSON.parse(fs.readFileSync('/Volumes/1540/companal/stand-scouting/manifest.json'));
+// 		for (var team in manifest) {
+// 			if (!fs.existsSync('data-collect/stand-scouting/' + manifest[team]) && fs.existsSync('/Volumes/1540/companal/stand-scouting/' + manifest[team])) {
+// 				var dataJSON = fs.readFileSync('/Volumes/1540/companal/stand-scouting/' + manifest[team]);
+// 				var data = JSON.parse(dataJSON);
+// 				$('#m' + data.matchNumber + data.role).css('background-color', 'blue');
+// 				$('#m' + data.matchNumber + data.role).css('color', 'white');
+// 				$('#m' + data.matchNumber + data.role).text(findScout(data.scoutId).name);
+// 				addToTotal(data.scoutId,' stand');
+// 				manifestStand.push(manifest[team]);
+// 				fs.writeFileSync('data-collect/stand-scouting/manifest.json', JSON.stringify(manifestStand));
+// 				fs.writeFileSync('data-collect/stand-scouting/' + manifest[team],dataJSON);
+// 			}
+// 		}
+// 		new Noty({
+// 			text: 'Done importing data!',
+// 			type: 'success'
+// 		}).show();
+//  	} else {
+// 		new Noty({
+// 			text: 'There is no flashdrive at /Volumes/1540/.',
+// 			type: 'error'
+// 		}).show();
+//  	}
+// }
+
+//This function checks the data-collect folder, and resets the tables to account for data that has already been collected
 function reload() {
 	createTables()
 	//importing stand data
@@ -281,6 +299,8 @@ function reload() {
 		}
 	}
 }
+
+//exports data to a flashdrive
 function exportData() {
 	if (fs.existsSync('/Volumes/1540/companal/output')) {
 		fs.copySync('data-collect/stand-scouting/', '/Volumes/1540/companal/output/stand-scouting/');
@@ -292,6 +312,9 @@ function exportData() {
 		}).show();
 	}
 }
+
+//given an ID, returns a Scout with that ID
+//if the ID does not exist, returns null
 function findScout(id) {
 	for (x in scoutList) {
 		if (scoutList[x].id == id) {
@@ -300,6 +323,8 @@ function findScout(id) {
 	}
 	return null;
 }
+
+//makes it so all tables are hidden
 function resetTables() {
 	$('#members').hide();
 	$('#matches').hide();
@@ -310,6 +335,8 @@ function resetTables() {
 	$('.matches').removeClass('act');
 	$('.schedule').removeClass('act');
 }
+
+//creates the tables
 function createTables() {
 	$("#membersBody").html("<tbody id='membersBody'></tbody>")
 	$("#matchBody").html("<tbody id='matchBody'></tbody>")
@@ -392,6 +419,8 @@ function createTables() {
 		}
 	}
 }
+
+//Adds to a scout's total number of matches scouted
 function addToTotal(id, type) {
 	scout = findScout(id);
 	if (type == 'pit') {
@@ -412,9 +441,12 @@ function addToTotal(id, type) {
 		$('#' + scout.id + 'req').text(scout.req - scout.total + ' more matches');
 	}
 }
+
+//sets the weight of pit scouting to the total matches scouted
 function pitWeight(pw) {
 	pitValue = pw;
 }
+//sets the required number of scouted matches
 function requirement(req) {
 	exemptionReq = req;
 }
@@ -1149,12 +1181,11 @@ exports.bluetooth = function() {
 // };
 // *****************************************************************************
 exports.database = function () {
-	exec("C:/Python27/python.exe Windows_Bluetooth_Server.py")
+	exec("C:/Python27/python.exe Windows_Bluetooth_Server.py") //runs the server bluetooth code
 	importScouts();
 	importSchedule();
 	setExemptions(exemptionReq);
-	importPitManifest();
-	importStandManifest();
+	//adds all of the code to the html
 	$(function () {
 		$('head').append(`
 			<style>
@@ -1327,7 +1358,7 @@ exports.database = function () {
 				var scoutOne = findScout(data.scoutIds[0]);
 				var scoutTwo = findScout(data.scoutIds[1]);
 				addToTotal(scoutOne.id,'pit');
-          		if (scoutTwo != null) {
+          			if (scoutTwo != null) {
 					addToTotal(scoutTwo.id,'pit');
 				}
 			}
