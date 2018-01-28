@@ -22,6 +22,7 @@ var init = false;
 var initCount = 0;
 var loginCount = 0;
 var isStand = false;
+var match_data = false;
 var pitTeam;
 var pitConfirm;
 var manifest;
@@ -73,6 +74,12 @@ function save() {
       fs.writeFileSync('./data/' + json.team + '.json', JSON.stringify(json));
       if (manifest.indexOf(json.team + '.json') === -1) {
         manifest.push(json.team + '.json');
+      }
+    } else if (match_data) {
+      json.match = match;
+      fs.writeFileSync('./data/' + json.match +'.json', JSON.stringify(json));
+      if (manifest.indexOf(json.match + '.json') === -1) {
+        manifest.push(json.match + '.json');
       }
     } else {
       if (!fileExist) {
@@ -392,19 +399,13 @@ function createTables() {
 		$('#matchBody').append('<tr id="m' + match + 'row"></tr>');
 		$(rs).append('<td id="m' + match + 'num">' + match + '</td>');
 		all = "r" //alliance
-    for (i = 1; i < 4; i++) {
-      $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + all + i + '">False</td>');
-      if (all=="r" && i==3) {
+    	for (i = 1; i < 4; i++) {
+      		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + all + i + '">False</td>');
+      		if (all=="r" && i==3) {
 				i=0
 				all="b"
 			}
-    }
-		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r1">False</td>');
-		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r2">False</td>');
-		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r3">False</td>');
-		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b1">False</td>');
-		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b2">False</td>');
-		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b3">False</td>');
+		}
 	}
 	// Schedule Table
 	for (match = 1; match < Object.keys(matchSchedule).length + 1; match++) {
@@ -634,7 +635,7 @@ exports.input = function (a, b, c, d, e, f) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.radio = function (a, b, c, d, e, f) {
+exports.radio = function (a, b, c, d, e, f, timestamp) {
   if (init) {
     count++;
     $(a).append(
@@ -655,7 +656,7 @@ exports.radio = function (a, b, c, d, e, f) {
       if (c[i]['color'] == undefined) {
         throw new Error('color cannot be undefined');
       }
-      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) + ' scout-mc scout-mc-' + count + ' btn-outline-' + style + '" data-key="' + d + '"><input type="radio" ' + val + ' autocomplete="off" style="display: none;">' + c[i]['text'] + '</span>');
+      $('.bg-' + count).append('<span data-count="'+count+'" color="'+color+'" class="btn btn-' + count + '-' + (i + 1) + ' scout-mc scout-mc-' + count + ' btn-outline-' + style + '" data-key="' + d + '"><input type="radio" ' + val + ' autocomplete="off" style="display: none;">' + c[i]['text'] + '</span>');
       if (color.indexOf('#') >= 0) {
         $('.btn-' + count + '-' + (i + 1))
           .css({color: color, borderColor: color})
@@ -672,6 +673,25 @@ exports.radio = function (a, b, c, d, e, f) {
     }
     if (f != undefined) {
       $('.scout-mc-' + count).addClass(f);
+    }
+    if (timestamp==true) {
+      $('.mc-'+count).attr("data-log","{}");
+      $('.mc-'+count).addClass("timestamp");
+      $(a).append(`
+        <h1 style='text-align:center' id='target-`+count+`'>N/A</h1>
+      `);
+      $('.scout-mc-'+count).click(function(){
+        try {
+          co = $(this).attr('data-count');
+          log = JSON.parse($('.mc-'+co).attr("data-log"));
+          log[time]=$(this).text();
+          $('.mc-'+co).attr('data-log',JSON.stringify(log));
+          $('#target-'+co).text($(this).text());
+          $('#target-'+co).css("class",$(this).attr("color"));
+        } catch(err) {
+          console.log('nope');
+        }
+      });
     }
   } else {
     throw new Error('scout.init() not instantiated');
@@ -753,6 +773,34 @@ exports.textarea = function (a, b, c, d, e, f) {
     throw new Error('scout.init() not instantiated');
   }
 };
+
+// teleTime should usually be 30
+// endTime should usually be 230
+exports.timer = function (placeToPut, textPlaceToPut, textDisplay, teleTime, endTime) {
+  if (init) {
+    count++
+    time = endTime;
+    interval = undefined
+    function upTime() {
+      time-=1;
+      if (time<=(endTime-teleTime)) {
+        $("#timeDisplay").css("color","black");
+      }
+      $("#timeDisplay").text(time);
+      if (time==0) {
+        clearInterval(interval);
+      }
+    }
+    $(textPlaceToPut).prepend(`<h1 id="timeDisplay" style="text-align:center">`+endTime+`</h1>`)
+    $(placeToPut).append(`<div style="text-align:center;"><input type='button' class='timeButton btn btn-outline-success' value='`+textDisplay+`'/></div><br><br>`);
+    $(".timeButton").click(function(){
+      $(this).hide();
+      $("#timeDisplay").css("color","red");
+      interval = setInterval(upTime,1000);
+    });
+  }
+}
+
 // *****************************************************************************
 // Other functions:
 exports.chart = function (a, b) {
@@ -761,7 +809,6 @@ exports.chart = function (a, b) {
 exports.done = function (a, b, c) {
   if (init) {
     count++;
-    match++;
     if (arguments.length == 1 && b == undefined) {
       b = true;
     }
@@ -817,7 +864,7 @@ exports.init = function (a, b) {
   initCount++;
   isSave = b ? true : false;
   if (initCount == 1) {
-    if (a == 'stand' || 'pit') {
+    if (a == 'stand' || 'pit' || 'match') {
       var scoutDir = './scouting';
       var dataDir = './data';
       if (!fs.existsSync(scoutDir)){
@@ -938,7 +985,7 @@ exports.init = function (a, b) {
         layout: 'center'
       }).show();
     } else if (a == 'database') {
-			init = true
+	  init = true;
       if (!fs.existsSync('./data-collect')) {
         fs.mkdirSync('./data-collect');
       }
@@ -968,8 +1015,16 @@ exports.init = function (a, b) {
       }
     } else if (a == 'blank') {
       init = true;
+    } else if (a == 'match') {
+      if (!fs.existsSync("./scouting/match.txt")) {
+        fs.writeFileSync("./scouting/match.txt",1);
+      }
+      match_data = true;
+      init = true;
+      match = fs.readFileSync("./scouting/match.txt","utf8");
+      $("body").append(`<h3 style='position:absolute;right:10px;top:5px'>Match: `+match+`</h3>`)
     } else {
-      throw new Error('Use \'scout\', \'pit\', \'database\', \'analysis\', \'blank\'.');
+      throw new Error('Use \'scout\', \'pit\', \'match\', \'database\', \'analysis\', \'blank\'.');
       init = false;
     }
     return init;
@@ -1019,6 +1074,9 @@ exports.login = function (a, b, c) {
     $('.btn-next, .btn-back').hide();
     $('.ls-' + count).click(function () {
       var act = $('.l-' + num).val()
+      if (scouts==undefined && fs.existsSync("./scouting/scouts.json")) {
+        scouts=JSON.parse(fs.readFileSync("./scouting/scouts.json"));
+      }
       if (scouts.hasOwnProperty(act)) {
         loginCount++;
         if (loginCount == 1) {
@@ -1236,7 +1294,7 @@ exports.database = function () {
 				<br>
 				<br>
 				<button class='sect act btn-primary btn members' type='button' style='margin-bottom: 10px;'>Members</button>
-			 	<!--<button class='sect btn-primary btn teams' type='button' style='margin-bottom: 10px;'>Teams</button>-->
+				<!--<button class='sect btn-primary btn teams' type='button' style='margin-bottom: 10px;'>Teams</button>-->
 				<button class='sect btn-primary btn matches' type='button' style='margin-bottom: 10px;'>Matches</button>
 				<button class='sect btn-primary btn schedule' type='button' style='margin-bottom:10px'>Match Schedule</button>
 				<br>
@@ -1324,11 +1382,11 @@ exports.database = function () {
 			$('#members').show();
 			$('.members').addClass('act');
 		});
-		// $('.teams').click(function(){
-		// 	resetTables();
-		// 	$('#teams').show();
-		// 	$('.teams').addClass('act');
-		// });
+// 		$('.teams').click(function(){
+// 			resetTables();
+// 			$('#teams').show();
+// 			$('.teams').addClass('act');
+// 		});
 		$('.matches').click(function(){
 			resetTables();
 			$('#matches').show();
@@ -1358,7 +1416,7 @@ exports.database = function () {
 				var scoutOne = findScout(data.scoutIds[0]);
 				var scoutTwo = findScout(data.scoutIds[1]);
 				addToTotal(scoutOne.id,'pit');
-          			if (scoutTwo != null) {
+          		if (scoutTwo != null) {
 					addToTotal(scoutTwo.id,'pit');
 				}
 			}
@@ -1429,11 +1487,16 @@ $(document).ready(function () {
   });
   $('.scout-mc').click(function () {
     var name = $(this).attr('data-key');
-    var value = $(this).children().attr('value') == undefined ? $(this).text() : $(this).children().val();
-    typeof value == 'string' && value != 'true' && value != 'false' ?
-      /* eval('json.' + name + ' = "' + value + '"') */ json[name] = '"' + value + '"' :
-      json[name] = value;
+    var value;
+    if ($(this).parent().parent().attr("data-log")==undefined) {
+      value = $(this).children().attr('value') == undefined ? $(this).text() : $(this).children().val();
+      typeof value == 'string' && value != 'true' && value != 'false' ?
+        /* eval('json.' + name + ' = "' + value + '"') */ json[name] = '"' + value + '"' :
+        json[name] = value;
       // eval('json.' + name + ' = ' + value);
+    } else {
+      json[name] = $(this).parent().parent().attr("data-log");
+    }
     save();
   });
   $('.scout-t').keyup(function () {
@@ -1468,21 +1531,26 @@ $(document).ready(function () {
   });
   $('.btn-done').click(function () {
     var reqTrue = [];
-    for (i = 0; i < required.length; i++) {
-      if (!json.hasOwnProperty(required[i])) {
-        new Noty({
-          text: 'Please complete all required fields.',
-          type: 'error'
-        }).show();
-        break;
+    var i = 0;
+    do {
+      if (required.length>0) {
+        if (!json.hasOwnProperty(required[i])) {
+          new Noty({
+            text: 'Please complete all required fields.',
+            type: 'error'
+          }).show();
+          break;
+        }
+        reqTrue.push(true);
       }
-      reqTrue.push(true);
-      if (reqTrue[(required.length - 1)]) {
+      if (required.length==0 || reqTrue[(required.length - 1)]) {
         save();
+        match++;
         fs.writeFileSync('./scouting/match.txt', match);
         window.location.reload();
       }
-    }
+      i++;
+    } while (i<required.length);
   });
   $('.btn-next').click(function () {
     var page = $(this).attr('data-page');
