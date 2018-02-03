@@ -5,6 +5,7 @@ var fs = require('fs-extra');
 var Noty = require('noty');
 // var fontAwesome = require('font-awesome'); NOTE: Doesn't work
 var exec = require('child_process').execSync;
+var execAsync = require('child_process').exec;
 // *****************************************************************************
 var count = 0;
 var json = {};
@@ -42,6 +43,7 @@ var required = [];
 var isSave = false;
 var standNav = [];
 var settings = false;
+var scoutKeys = {}
 var uuid = "66216088-cc64-4a35-969f-58336ef03732" // for bluetooth
 var addr = "80:19:34:19:20:FC"
 // *****************************************************************************
@@ -66,17 +68,20 @@ function save() {
     manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
     if (isStand) {
       json.team = team;
+			json.typ = "stand"
       fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
       if (manifest.indexOf('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json') === -1) {
         manifest.push('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json');
       }
     } else if (isPit) {
+			json.typ = "pit"
       fs.writeFileSync('./data/' + json.team + '.json', JSON.stringify(json));
       if (manifest.indexOf(json.team + '.json') === -1) {
         manifest.push(json.team + '.json');
       }
     } else if (match_data) {
       json.match = match;
+			json.typ = "match"
       fs.writeFileSync('./data/' + json.match +'.json', JSON.stringify(json));
       if (manifest.indexOf(json.match + '.json') === -1) {
         manifest.push(json.match + '.json');
@@ -286,7 +291,7 @@ function reload() {
 				var data = JSON.parse(fs.readFileSync('data-collect/stand-scouting/'+t));
 				$('#m' + data.matchNumber + data.role).css('background-color', 'blue');
 				$('#m' + data.matchNumber + data.role).css('color', 'white');
-				addToTotal(data.scoutId,'stand');
+				addToTotal(data.scout,'stand');
 			}
 		}
 	}
@@ -297,13 +302,34 @@ function reload() {
 			var t = manifest[team]
 			if (fs.existsSync("data-collect/pit-scouting/"+t)) {
 				var data = JSON.parse(fs.readFileSync('data-collect/pit-scouting/'+t));
-				addToTotal(data.scoutIds[0], 'pit');
-				scoutTwo = findScout(data.scoutIds[1]);
-				if (scoutTwo!=null) {
-					addToTotal(scoutTwo.id, 'pit');
+				addToTotal(data.scout, 'pit');
+				scoutTwo = data["second-scout"]);
+				if (scoutTwo!=undefined) {
+					addToTotal(scoutTwo, 'pit');
 				}
 			}
 		}
+	}
+	//importing match data
+	if (fs.existsSync("data-collect/match-scouting/manifest.json")) {
+		manifest = fs.readFileSync("data-collect/match-scouting/manifest.json");
+		for (match in manifest) {
+			var t = manifest[match]
+			if (fs.existsSync("data-collect/match-scouting/"+t)) {
+				var data = JSON.parse(fs.readFileSync('data-collect/match-scouting/'+t));
+				$('#m' + data.match + 'row').css('background-color', 'blue');
+				$('#m' + data.match + 'row').css('color', 'white');
+				addToTotal(data.scout,'match');
+			}
+		}
+	}
+}
+
+function scoutUpdate(json) {
+	var scouts = JSON.parse(json.scouts);
+	var keys = Object.keys(scouts);
+	for (x in keys) {
+		addToTotal(scout,json.typ)
 	}
 }
 
@@ -1032,44 +1058,46 @@ exports.init = function (a, b) {
     throw new Error('scout.init() instantiated ' + initCount + ' times');
   }
 };
-exports.login = function (a, b, c) {
+exports.login = function (a, b, required, jsonkey, c) {
   if (init) {
     count++;
     var num = count;
     $(a).append(
-      `<div class="input-group" style="text-align: center;">
-        <input class="form-control l-` + num + `" type="number">
-        <button type="button" class="btn btn-outline-success ls-` + count + `">Login</button>
-      </div>
-      <br>
-      <div style="text-align: center;">
-        <h1 class="l-greeting" style="display: none;">Welcome, </h1>
-      </div>
-      <div class="role" style="display: none; text-align: center;">
-        <div class="btn-group" data-toggle="buttons">
-          <span class="btn btn-outline-danger">
-            <input type="radio" class="btn-role" autocomplete="off" value="r1">Red 1
-          </span>
-          <span class="btn btn-outline-danger">
-            <input type="radio" class="btn-role" autocomplete="off" value="r2">Red 2
-          </span>
-          <span class="btn btn-outline-danger">
-            <input type="radio" class="btn-role" autocomplete="off" value="r3">Red 3
-          </span>
-          <span class="btn btn-outline-info">
-            <input type="radio" class="btn-role" autocomplete="off" value="b1">Blue 1
-          </span>
-          <span class="btn btn-outline-info">
-            <input type="radio" class="btn-role" autocomplete="off" value="b2">Blue 2
-          </span>
-          <span class="btn btn-outline-info">
-            <input type="radio" class="btn-role" autocomplete="off" value="b3">Blue 3
-          </span>
-        </div>
-        <br>
-        <br>
-        <button type="button" class="btn btn-outline-success role-submit">Submit</button>
-      </div>`
+      `<div class = 'login-`+ num +`'>
+				<div class="input-group" style="text-align: center;">
+	        <input class="form-control l-` + num + `" type="number">
+	        <button type="button" class="btn btn-outline-success ls-` + count + `">Login</button>
+	      </div>
+	      <br>
+	      <div style="text-align: center;">
+	        <h1 class="l-greeting" style="display: none;">Welcome, </h1>
+	      </div>
+	      <div class="role" style="display: none; text-align: center;">
+	        <div class="btn-group" data-toggle="buttons">
+	          <span class="btn btn-outline-danger">
+	            <input type="radio" class="btn-role" autocomplete="off" value="r1">Red 1
+	          </span>
+	          <span class="btn btn-outline-danger">
+	            <input type="radio" class="btn-role" autocomplete="off" value="r2">Red 2
+	          </span>
+	          <span class="btn btn-outline-danger">
+	            <input type="radio" class="btn-role" autocomplete="off" value="r3">Red 3
+	          </span>
+	          <span class="btn btn-outline-info">
+	            <input type="radio" class="btn-role" autocomplete="off" value="b1">Blue 1
+	          </span>
+	          <span class="btn btn-outline-info">
+	            <input type="radio" class="btn-role" autocomplete="off" value="b2">Blue 2
+	          </span>
+	          <span class="btn btn-outline-info">
+	            <input type="radio" class="btn-role" autocomplete="off" value="b3">Blue 3
+	          </span>
+	        </div>
+	        <br>
+	        <br>
+	        <button type="button" class="btn btn-outline-success role-submit">Submit</button>
+	      </div>
+			</div>`
     );
     $('.btn-next, .btn-back').hide();
     $('.ls-' + count).click(function () {
@@ -1078,20 +1106,19 @@ exports.login = function (a, b, c) {
         scouts=JSON.parse(fs.readFileSync("./scouting/scouts.json"));
       }
       if (scouts.hasOwnProperty(act)) {
-        loginCount++;
-        if (loginCount == 1) {
-          $('.l-greeting')
-            .append(scouts[act] + '!')
-            .fadeIn();
-          json.scout = act;
-          save();
-          if (isStand) {
-            $('.btn-next, .btn-back').show();
-          } else {
-            $('.btn-next').show();
-          }
-          $('.num-change').text(scouts[act]);
+        $('.l-greeting')
+          .append(scouts[act] + '!')
+          .fadeIn();
+				scoutKeys[jsonkey] = act;
+        json[scouts] = JSON.stringify(scoutKeys);
+        save();
+        if (isStand) {
+          $('.btn-next, .btn-back').show();
+        } else {
+          $('.btn-next').show();
         }
+        $('.num-change').text(scouts[act]);
+				$(".login-"+num).hide();
       } else if (act == b) {
         $('.role').fadeIn();
       } else {
@@ -1103,6 +1130,9 @@ exports.login = function (a, b, c) {
     });
     if (c != undefined) {
       $('.l-' + num).addClass(c);
+    }
+		if (required) {
+      required.push(d);
     }
   } else {
     throw new Error('scout.init() not instantiated');
@@ -1239,7 +1269,7 @@ exports.bluetooth = function() {
 // };
 // *****************************************************************************
 exports.database = function () {
-	exec("C:/Python27/python.exe Windows_Bluetooth_Server.py") //runs the server bluetooth code
+	execAsync("C:/Python27/python.exe Windows_Bluetooth_Server.py") //runs the server bluetooth code
 	importScouts();
 	importSchedule();
 	setExemptions(exemptionReq);
@@ -1399,28 +1429,7 @@ exports.database = function () {
 		});
 		createTables();
 		resetTables();
-		// Load Stand
-		for (x in manifestStand) {
-			if (fs.existsSync('data-collect/stand-scouting/' + manifestStand[x])) {
-				var data = JSON.parse(fs.readFileSync('data-collect/stand-scouting/' + manifestStand[x]));
-				addToTotal(data.scoutId,'stand');
-				$('#m' + data.matchNumber + data.role).css('background-color','blue');
-				$('#m' + data.matchNumber + data.role).css('color','white');
-				$('#m' + data.matchNumber + data.role).text(findScout(data.scoutId).name);
-			}
-		}
-		// Load Pit
-		for (x in manifestPit) {
-			if (fs.existsSync('data-collect/pit-scouting/' + manifestPit[x])) {
-				var data = JSON.parse(fs.readFileSync('data-collect/pit-scouting/' + manifestPit[x]));
-				var scoutOne = findScout(data.scoutIds[0]);
-				var scoutTwo = findScout(data.scoutIds[1]);
-				addToTotal(scoutOne.id,'pit');
-          		if (scoutTwo != null) {
-					addToTotal(scoutTwo.id,'pit');
-				}
-			}
-		}
+		reload();
 	});
 };
 // *****************************************************************************
@@ -1650,10 +1659,10 @@ $(document).ready(function () {
 				if (fs.existsSync("data/"+m[stuff])) {
 					data = JSON.stringify(JSON.parse(fs.readFileSync("data/"+m[stuff])))
 					try {
-						exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
+						execAsync('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
 					} catch(_) {
 						try {
-							exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
+							execAsync('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
 						} catch(_) {
 							console.log("lol you failed")
 						}
@@ -1701,12 +1710,17 @@ $(document).ready(function () {
 // *****************************************************************************
   $('.num-change').click(function () {
     $(this).attr('contenteditable', 'true');
-    $(this).text(json.scout);
+		var scoutText = "";
+		var keys = Object.keys(scoutKeys);
+		for (s in keys) {
+    	scoutText += findScout(scoutKeys[keys[s]]).name + ", "
+		}
+		$(this).text(scoutText.slice(0,-2));
   });
   $('.num-change').keyup(function (event) {
     if (event.which == 13) {
       if (scouts[$('.num-change').val()] != undefined) {
-        json.scout = $('.num-change').val();
+        json[scout] = JSON.stringify({"scout":$('.num-change').val()});
         $('.num-change').val(scouts[$('.num-change').val()]);
         $(this).attr('contenteditable', 'false');
       } else {
