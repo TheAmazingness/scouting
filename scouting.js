@@ -281,10 +281,14 @@ function setExemptions() {
 
 //This function checks the data-collect folder, and resets the tables to account for data that has already been collected
 function reload() {
-	createTables()
 	//importing stand data
+	for (s in scouts) {
+		scout.pit = 0
+		scout.stand = 0
+		scout.total = 0
+	}
 	if (fs.existsSync("data-collect/stand-scouting/manifest.json")) {
-		manifest = fs.readFileSync("data-collect/stand-scouting/manifest.json");
+		manifest = JSON.parse(fs.readFileSync("data-collect/stand-scouting/manifest.json"));
 		for (var team in manifest) {
 			var t = manifest[team]
 			if (fs.existsSync("data-collect/stand-scouting/"+t)) {
@@ -297,9 +301,9 @@ function reload() {
 	}
 	//importing pit data
 	if (fs.existsSync("data-collect/pit-scouting/manifest.json")) {
-		manifest = fs.readFileSync("data-collect/pit-scouting/manifest.json");
-		for (var team in manifest) {
-			var t = manifest[team]
+		pitmanifest = JSON.parse(fs.readFileSync("data-collect/pit-scouting/manifest.json"));
+		for (var team in pitmanifest) {
+			var t = pitmanifest[team]
 			if (fs.existsSync("data-collect/pit-scouting/"+t)) {
 				var data = JSON.parse(fs.readFileSync('data-collect/pit-scouting/'+t));
 				scoutUpdate(data)
@@ -308,7 +312,7 @@ function reload() {
 	}
 	//importing match data
 	if (fs.existsSync("data-collect/match-scouting/manifest.json")) {
-		manifest = fs.readFileSync("data-collect/match-scouting/manifest.json");
+		manifest = JSON.parse(fs.readFileSync("data-collect/match-scouting/manifest.json"));
 		for (match in manifest) {
 			var t = manifest[match]
 			if (fs.existsSync("data-collect/match-scouting/"+t)) {
@@ -319,6 +323,7 @@ function reload() {
 			}
 		}
 	}
+	createTables()
 }
 
 function scoutUpdate(json) {
@@ -456,7 +461,7 @@ function addToTotal(id, type) {
 		$('#' + id + 'num1').text(scout.stand);
 	}
 	$('#' + id + 'num2').text(scout.total);
-	if (!scout.exempt && scout.total >= scout.req) {
+	if (scout.req!=undefined || (!scout.exempt && scout.total >= scout.req)) {
 		scout.exempt=true;
 		$('#' + scout.id + 'req').text('Completed');
 		$('#' + scout.id + 'req').css('background-color','#F5FFBF');
@@ -1014,6 +1019,9 @@ exports.init = function (a, b) {
       if (!fs.existsSync('./data-collect/pit-scouting')) {
         fs.mkdirSync('./data-collect/pit-scouting');
       }
+			if (!fs.existsSync('./data-collect/match-scouting')) {
+        fs.mkdirSync('./data-collect/match-scouting');
+      }
       if (!fs.existsSync('./data-collect/stand-scouting')) {
         fs.mkdirSync('./data-collect/stand-scouting');
       }
@@ -1106,7 +1114,7 @@ exports.login = function (a, b, required, jsonkey, c) {
           .append(scouts[act] + '!')
           .fadeIn();
 				scoutKeys[jsonkey] = act;
-        json[scouts] = JSON.stringify(scoutKeys);
+        json["scouts"] = JSON.stringify(scoutKeys);
         save();
         if (isStand) {
           $('.btn-next, .btn-back').show();
@@ -1403,6 +1411,9 @@ exports.database = function () {
 		$('.export').click(function(){
 			exportData();
 		});
+		$('.reload').click(function(){
+			reload();
+		})
 		$('.members').click(function(){
 			resetTables();
 			$('#members').show();
