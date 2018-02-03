@@ -291,7 +291,7 @@ function reload() {
 				var data = JSON.parse(fs.readFileSync('data-collect/stand-scouting/'+t));
 				$('#m' + data.matchNumber + data.role).css('background-color', 'blue');
 				$('#m' + data.matchNumber + data.role).css('color', 'white');
-				addToTotal(data.scout,'stand');
+				scoutUpdate(data)
 			}
 		}
 	}
@@ -302,11 +302,7 @@ function reload() {
 			var t = manifest[team]
 			if (fs.existsSync("data-collect/pit-scouting/"+t)) {
 				var data = JSON.parse(fs.readFileSync('data-collect/pit-scouting/'+t));
-				addToTotal(data.scout, 'pit');
-				scoutTwo = data["second-scout"]);
-				if (scoutTwo!=undefined) {
-					addToTotal(scoutTwo, 'pit');
-				}
+				scoutUpdate(data)
 			}
 		}
 	}
@@ -319,7 +315,7 @@ function reload() {
 				var data = JSON.parse(fs.readFileSync('data-collect/match-scouting/'+t));
 				$('#m' + data.match + 'row').css('background-color', 'blue');
 				$('#m' + data.match + 'row').css('color', 'white');
-				addToTotal(data.scout,'match');
+				scoutUpdate(data)
 			}
 		}
 	}
@@ -329,7 +325,7 @@ function scoutUpdate(json) {
 	var scouts = JSON.parse(json.scouts);
 	var keys = Object.keys(scouts);
 	for (x in keys) {
-		addToTotal(scout,json.typ)
+		addToTotal(scouts[keys[x]],json.typ)
 	}
 }
 
@@ -454,7 +450,7 @@ function addToTotal(id, type) {
 		scout.pit += 1;
 		scout.total += pitValue;
 		$('#' + id + 'num').text(scout.pit);
-	} else {
+	} else if (type=='stand' || type=='match') {
 		scout.stand += 1;
 		scout.total += 1;
 		$('#' + id + 'num1').text(scout.stand);
@@ -1131,9 +1127,9 @@ exports.login = function (a, b, required, jsonkey, c) {
     if (c != undefined) {
       $('.l-' + num).addClass(c);
     }
-		if (required) {
-      required.push(d);
-    }
+		// if (required) {
+    //   required.push(d);
+    // }
   } else {
     throw new Error('scout.init() not instantiated');
   }
