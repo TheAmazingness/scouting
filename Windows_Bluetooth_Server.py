@@ -9,7 +9,6 @@ server_sock.listen(1)
 port = server_sock.getsockname()[1]
 
 uuid = "66216088-cc64-4a35-969f-58336ef03732"
-directory = "data-collect/pit-scouting/"
 
 advertise_service(server_sock, "SampleServer",
                   service_id=uuid,
@@ -21,10 +20,13 @@ advertise_service(server_sock, "SampleServer",
 print("Waiting for connection on RFCOMM channel %d" % port)
 
 while True:
+    print "lol bye"
     client_sock, client_info = server_sock.accept()
+    print client_sock
     message = ""
     try:
         while True:
+            print "still true"
             data = client_sock.recv(1024)
             if data == "end": break
             message += data
@@ -32,10 +34,29 @@ while True:
         pass
 
     message = urllib.unquote(message)
-    print message
     jsonMessage = json.loads(message)
 
-    name = jsonMessage["teamNumber"] + ".json"
+    print jsonMessage
+
+    name = "eyyyy.json"
+    directory = "data-collect/match-scouting/"
+
+    print jsonMessage
+    if jsonMessage["typ"]=="stand":
+        name = jsonMessage["matchNumber"] + "-" + jsonMessage["teamMember"] + ".json"
+        directory = "data-collect/stand-scouting/"
+        print "a"
+    elif jsonMessage["typ"]=="pit":
+        print "b"
+        name = jsonMessage["teamMember"] + ".json"
+        directory = "data-collect/pit-scouting/"
+    elif jsonMessage["typ"]=="match":
+        print "c"
+        name = jsonMessage["match"] + ".json"
+        directory = "data-collect/match-scouting/"
+
+    print name
+    print directory
     jsonFile = open(directory + name, "w+")
     jsonFile.write(message)
     jsonFile.close()
