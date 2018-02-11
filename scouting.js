@@ -367,8 +367,13 @@ function backupify(file) {
 	if (!fs.existsSync("data/backup")) {
 		fs.mkdirSync("data/backup");
 	}
-	fs.copySync("data/"+file, "data/backup/"+file);
+	fs.copyFileSync("data/"+file, "data/backup/"+file);
 	fs.unlink("data/"+file);
+	if (fs.existsSync('data/manifest.json')) {
+		m = JSON.parse(fs.readFileSync('data/manifest.json'));
+    m.splice(m.indexOf(file), 1);
+		fs.writeFileSync('data/manifest.json',JSON.stringify(m));
+	}
 }
 
 //makes it so all tables are hidden
@@ -1683,11 +1688,11 @@ $(document).ready(function () {
 					data = JSON.stringify(JSON.parse(fs.readFileSync("data/"+m[stuff])))
 					try {
 						exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
-						backupify(data);
+						backupify(m[stuff]);
 					} catch(_) {
 						try {
 							exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
-							backupify(data);
+							backupify(m[stuff]);
 						} catch(_) {
 							console.log("lol you failed")
 							fs.writeFileSync("data/"+m[stuff],data);
