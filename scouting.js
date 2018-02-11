@@ -1131,7 +1131,6 @@ exports.login = function (a, b, required, jsonkey, c) {
           $('.btn-next').show();
         }
         $('.num-change').text(scouts[act]);
-				$(".login-"+num).hide();
       } else if (act == b) {
         $('.role').fadeIn();
       } else {
