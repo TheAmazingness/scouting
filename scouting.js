@@ -367,11 +367,11 @@ function backupify(file) {
 	if (!fs.existsSync("data/backup")) {
 		fs.mkdirSync("data/backup");
 	}
-	fs.copyFileSync("data/"+file, "data/backup/"+file);
-	fs.unlink("data/"+file);
+	fs.copySync("data/"+file, "data/backup/"+file);
+	fs.unlinkSync("data/"+file);
 	if (fs.existsSync('data/manifest.json')) {
 		m = JSON.parse(fs.readFileSync('data/manifest.json'));
-    m.splice(m.indexOf(file), 1);
+		m.splice(m.indexOf(file), 1);
 		fs.writeFileSync('data/manifest.json',JSON.stringify(m));
 	}
 }
