@@ -363,6 +363,14 @@ function findScout(id) {
 	return null;
 }
 
+function backupify(file) {
+	if (!fs.existsSync("data/backup")) {
+		fs.mkdirSync("data/backup");
+	}
+	fs.copySync("data/"+file, "data/backup/"+file);
+	fs.unlink("data/"+file);
+}
+
 //makes it so all tables are hidden
 function resetTables() {
 	$('#members').hide();
@@ -1675,11 +1683,14 @@ $(document).ready(function () {
 					data = JSON.stringify(JSON.parse(fs.readFileSync("data/"+m[stuff])))
 					try {
 						exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
+						backupify(data);
 					} catch(_) {
 						try {
 							exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
+							backupify(data);
 						} catch(_) {
 							console.log("lol you failed")
+							fs.writeFileSync("data/"+m[stuff],data);
 						}
 					}
 				}
