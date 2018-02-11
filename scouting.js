@@ -1674,10 +1674,10 @@ $(document).ready(function () {
 				if (fs.existsSync("data/"+m[stuff])) {
 					data = JSON.stringify(JSON.parse(fs.readFileSync("data/"+m[stuff])))
 					try {
-						execAsync('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
+						exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
 					} catch(_) {
 						try {
-							execAsync('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
+							exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
 						} catch(_) {
 							console.log("lol you failed")
 						}
