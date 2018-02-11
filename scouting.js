@@ -44,6 +44,7 @@ var isSave = false;
 var standNav = [];
 var settings = false;
 var scoutKeys = {}
+var scoutedIDs = []
 var uuid = "66216088-cc64-4a35-969f-58336ef03732" // for bluetooth
 var addr = "80:19:34:19:20:FC"
 // *****************************************************************************
@@ -282,10 +283,10 @@ function setExemptions() {
 //This function checks the data-collect folder, and resets the tables to account for data that has already been collected
 function reload() {
 	//importing stand data
-	for (s in scouts) {
-		scout.pit = 0
-		scout.stand = 0
-		scout.total = 0
+	for (s in scoutList) {
+		scoutList[s].pit = 0;
+		scoutList[s].stand = 0;
+		scoutList[s].total = 0;
 	}
 	if (fs.existsSync("data-collect/stand-scouting/manifest.json")) {
 		manifest = JSON.parse(fs.readFileSync("data-collect/stand-scouting/manifest.json"));
@@ -293,8 +294,9 @@ function reload() {
 			var t = manifest[team]
 			if (fs.existsSync("data-collect/stand-scouting/"+t)) {
 				var data = JSON.parse(fs.readFileSync('data-collect/stand-scouting/'+t));
-				$('#m' + data.matchNumber + data.role).css('background-color', 'blue');
-				$('#m' + data.matchNumber + data.role).css('color', 'white');
+				if (scoutedIDs.indexOf('#m'+data.matchNumber+data.role)==-1) {
+					scoutedIDs.push('#m'+data.matchNumber+data.role);
+				}
 				scoutUpdate(data)
 			}
 		}
@@ -317,8 +319,9 @@ function reload() {
 			var t = manifest[match]
 			if (fs.existsSync("data-collect/match-scouting/"+t)) {
 				var data = JSON.parse(fs.readFileSync('data-collect/match-scouting/'+t));
-				$('#m' + data.match + 'row').css('background-color', 'blue');
-				$('#m' + data.match + 'row').css('color', 'white');
+				if (scoutedIDs.indexOf('#m'+data.match+'num')==-1) {
+					scoutedIDs.push('#m'+data.match+'num');
+				}
 				scoutUpdate(data)
 			}
 		}
@@ -326,11 +329,13 @@ function reload() {
 	createTables()
 }
 
-function scoutUpdate(json) {
-	var scouts = JSON.parse(json.scouts);
-	var keys = Object.keys(scouts);
-	for (x in keys) {
-		addToTotal(scouts[keys[x]],json.typ)
+function scoutUpdate(data) {
+	if (data.scouts!=undefined) {
+		var scouts = JSON.parse(data.scouts);
+		var keys = Object.keys(scouts);
+		for (x in keys) {
+			addToTotal(scouts[keys[x]],data.typ)
+		}
 	}
 }
 
@@ -445,6 +450,10 @@ function createTables() {
 				$('#s' + match + x + 'spot').css('background-color','#B6FF9E');
 			}
 		}
+	}
+	for (s in scoutedIDs) {
+		$(scoutedIDs[s]).css('background-color','blue');
+		$(scoutedIDs[s]).css('color','white');
 	}
 }
 
