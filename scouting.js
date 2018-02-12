@@ -5,6 +5,7 @@ var fs = require('fs-extra');
 var Noty = require('noty');
 // var fontAwesome = require('font-awesome'); NOTE: Doesn't work
 var exec = require('child_process').execSync;
+var execAsync = require('child_process').exec;
 // *****************************************************************************
 var count = 0;
 var json = {};
@@ -21,6 +22,7 @@ var init = false;
 var initCount = 0;
 var loginCount = 0;
 var isStand = false;
+var match_data = false;
 var pitTeam;
 var pitConfirm;
 var manifest;
@@ -39,12 +41,34 @@ var filenameString;
 var required = [];
 var isSave = false;
 var standNav = [];
+var settings = false;
+var scoutKeys = {}
+var scoutedIDs = []
+var uuid = "66216088-cc64-4a35-969f-58336ef03732" // for bluetooth
+var addr = "80:19:34:19:20:FC"
 // *****************************************************************************
+// Given that there is no settings dropdown button, addSettings() creates a dropdown menu.
+// Otherwise, this function does nothing
+function addSettings() {
+	if (!settings) { //if (init && !settings)
+		settings=true;
+		$("body").append(
+			`<div style="position:absolute;top:2vw;left:2vw;" class="dropdown">
+				<button type="button" id="dropdownMenuButton" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    			Settings
+  				</button>
+  				<div class="dropdown-menu settings-menu" aria-labelledby="dropdownMenuButton">
+  				</div>
+			</div>`
+		);
+	}
+}
 function save() {
   if (isSave) {
     manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
     if (isStand) {
       json.team = team;
+			json.typ = "stand
       json.role = role;
       json.match = $('.matchnum').val();
       fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
@@ -52,18 +76,26 @@ function save() {
         manifest.push('m' + $('.matchnum').val() + '-' + role + '-' + team + '.json');
       }
     } else if (isPit) {
+			json.typ = "pit"
       fs.writeFileSync('./data/' + json.team + '.json', JSON.stringify(json));
       if (manifest.indexOf(json.team + '.json') === -1) {
         manifest.push(json.team + '.json');
       }
+    } else if (match_data) {
+      json.match = match;
+			json.typ = "match"
+      fs.writeFileSync('./data/' + json.match +'.json', JSON.stringify(json));
+      if (manifest.indexOf(json.match + '.json') === -1) {
+        manifest.push(json.match + '.json');
+      }
     } else {
       if (!fileExist) {
-        filename = new Noty({
-          text: 'Filename: <input class="form-control filename" type="text">',
-          type: 'success',
-          closeWith: ['button'],
-          layout: 'center'
-        }).show();
+        // filename = new Noty({
+        //   text: 'Filename: <input class="form-control filename" type="text">',
+        //   type: 'success',
+        //   closeWith: ['button'],
+        //   layout: 'center'
+        // }).show();
         $('.filename').keyup(function () {
           if (event.which == 13) {
             filenameString = $(this).val();
@@ -117,6 +149,11 @@ function pitTeamEL() {
     }
   });
 };
+
+//literally just a contains function
+//a is a list
+//obj is an object that you are checking to see if it is in the list
+//returns true if object is in list
 function contains(a, obj) {
 	var i = a.length;
 	while (i--) {
@@ -126,6 +163,8 @@ function contains(a, obj) {
 	}
 	return false;
 }
+
+//a class for a scout
 function Scout(name,id) {
 	this.name = name;
 	this.id = id;
@@ -135,6 +174,8 @@ function Scout(name,id) {
 	this.total = 0;
 	this.exempt = false;
 }
+
+//imports scouts from scouts.json, for database app
 function importScouts() {
 	var file = JSON.parse(fs.readFileSync('data-collect/scouts.json'));
 	var keys = Object.keys(file);
@@ -142,9 +183,13 @@ function importScouts() {
 		scoutList.push(new Scout(file[keys[x]],keys[x]));
 	}
 }
+
+//imports schedule from schedule.json, for database app
 function importSchedule() {
 	matchSchedule = JSON.parse(fs.readFileSync('data-collect/schedule.json'));
 }
+
+//imports the number of matches each member has to scout from exempt.json, for database app
 function setExemptions() {
 	var file = JSON.parse(fs.readFileSync('data-collect/exempt.json'));
 	for (x in scoutList) {
@@ -158,82 +203,144 @@ function setExemptions() {
 		}
 	}
 }
-function importPitManifest() {
-	if (fs.existsSync('data-collect/pit-scouting/manifest.json')) {
-		manifestPit = JSON.parse(fs.readFileSync('data-collect/pit-scouting/manifest.json'));
-	} else {
-    new Noty({
-      text: 'No manifest.json file for pit scouting',
-      type: 'error'
-    }).show();
+
+// function importPitManifest() {
+// 	if (fs.existsSync('data-collect/pit-scouting/manifest.json')) {
+// 		manifestPit = JSON.parse(fs.readFileSync('data-collect/pit-scouting/manifest.json'));
+// 	} else {
+//     new Noty({
+//       text: 'No manifest.json file for pit scouting',
+//       type: 'error'
+//     }).show();
+// 	}
+// }
+// function importStandManifest() {
+// 	if (fs.existsSync('data-collect/stand-scouting/manifest.json')) {
+// 		manifestStand = JSON.parse(fs.readFileSync('data-collect/stand-scouting/manifest.json'));
+// 	} else {
+//     new Noty({
+//       text: 'No manifest.json file for stand scouting',
+//       type: 'error'
+//     }).show();
+// 	}
+// }
+// function importPit() {
+// 	if (fs.existsSync('/Volumes/1540/companal/pit-scouting/manifest.json')) {
+// 		var manifest = JSON.parse(fs.readFileSync('/Volumes/1540/companal/pit-scouting/manifest.json'));
+// 		for (var team in manifest) {
+// 			if (!fs.existsSync('data-collect/pit-scouting/' + manifest[team]) && fs.existsSync('/Volumes/1540/companal/pit-scouting/' + manifest[team])) {
+// 				var dataJSON = fs.readFileSync('/Volumes/1540/companal/pit-scouting/' + manifest[team]);
+// 				var data = JSON.parse(dataJSON);
+// 				scoutOne = findScout(data.scoutIds[0]);
+// 				addToTotal(scoutOne.id, 'pit');
+// 				scoutTwo = findScout(data.scoutIds[1]);
+// 				if (scoutTwo!=null) {
+// 					addToTotal(scoutTwo.id, 'pit');
+// 				}
+// 				manifestPit.push(manifest[team]);
+// 				fs.writeFileSync('data-collect/pit-scouting/manifest.json',JSON.stringify(manifestPit));
+// 				fs.writeFileSync('data-collect/pit-scouting/' + manifest[team],dataJSON);
+// 			}
+// 		}
+// 		new Noty({
+// 			text: 'Done importing data!',
+// 			type: 'success'
+// 		}).show();
+// 	} else {
+// 		new Noty({
+// 			text: 'There is no flashdrive at /Volumes/1540/.',
+// 			type: 'error'
+// 		}).show();
+// 	}
+// }
+// function importStand() {
+//  	if (fs.existsSync('/Volumes/1540/companal/stand-scouting/manifest.json')) {
+//  		var manifest = JSON.parse(fs.readFileSync('/Volumes/1540/companal/stand-scouting/manifest.json'));
+// 		for (var team in manifest) {
+// 			if (!fs.existsSync('data-collect/stand-scouting/' + manifest[team]) && fs.existsSync('/Volumes/1540/companal/stand-scouting/' + manifest[team])) {
+// 				var dataJSON = fs.readFileSync('/Volumes/1540/companal/stand-scouting/' + manifest[team]);
+// 				var data = JSON.parse(dataJSON);
+// 				$('#m' + data.matchNumber + data.role).css('background-color', 'blue');
+// 				$('#m' + data.matchNumber + data.role).css('color', 'white');
+// 				$('#m' + data.matchNumber + data.role).text(findScout(data.scoutId).name);
+// 				addToTotal(data.scoutId,' stand');
+// 				manifestStand.push(manifest[team]);
+// 				fs.writeFileSync('data-collect/stand-scouting/manifest.json', JSON.stringify(manifestStand));
+// 				fs.writeFileSync('data-collect/stand-scouting/' + manifest[team],dataJSON);
+// 			}
+// 		}
+// 		new Noty({
+// 			text: 'Done importing data!',
+// 			type: 'success'
+// 		}).show();
+//  	} else {
+// 		new Noty({
+// 			text: 'There is no flashdrive at /Volumes/1540/.',
+// 			type: 'error'
+// 		}).show();
+//  	}
+// }
+
+//This function checks the data-collect folder, and resets the tables to account for data that has already been collected
+function reload() {
+	//importing stand data
+	for (s in scoutList) {
+		scoutList[s].pit = 0;
+		scoutList[s].stand = 0;
+		scoutList[s].total = 0;
 	}
-}
-function importStandManifest() {
-	if (fs.existsSync('data-collect/stand-scouting/manifest.json')) {
-		manifestStand = JSON.parse(fs.readFileSync('data-collect/stand-scouting/manifest.json'));
-	} else {
-    new Noty({
-      text: 'No manifest.json file for stand scouting',
-      type: 'error'
-    }).show();
-	}
-}
-function importPit() {
-	if (fs.existsSync('/Volumes/1540/companal/pit-scouting/manifest.json')) {
-		var manifest = JSON.parse(fs.readFileSync('/Volumes/1540/companal/pit-scouting/manifest.json'));
+	if (fs.existsSync("data-collect/stand-scouting/manifest.json")) {
+		manifest = JSON.parse(fs.readFileSync("data-collect/stand-scouting/manifest.json"));
 		for (var team in manifest) {
-			if (!fs.existsSync('data-collect/pit-scouting/' + manifest[team]) && fs.existsSync('/Volumes/1540/companal/pit-scouting/' + manifest[team])) {
-				var dataJSON = fs.readFileSync('/Volumes/1540/companal/pit-scouting/' + manifest[team]);
-				var data = JSON.parse(dataJSON);
-				scoutOne = findScout(data.scoutIds[0]);
-				addToTotal(scoutOne.id, 'pit');
-				scoutTwo = findScout(data.scoutIds[1]);
-				if (scoutTwo!=null) {
-					addToTotal(scoutTwo.id, 'pit');
+			var t = manifest[team]
+			if (fs.existsSync("data-collect/stand-scouting/"+t)) {
+				var data = JSON.parse(fs.readFileSync('data-collect/stand-scouting/'+t));
+				if (scoutedIDs.indexOf('#m'+data.matchNumber+data.role)==-1) {
+					scoutedIDs.push('#m'+data.matchNumber+data.role);
 				}
-				manifestPit.push(manifest[team]);
-				fs.writeFileSync('data-collect/pit-scouting/manifest.json',JSON.stringify(manifestPit));
-				fs.writeFileSync('data-collect/pit-scouting/' + manifest[team],dataJSON);
+				scoutUpdate(data)
 			}
 		}
-		new Noty({
-			text: 'Done importing data!',
-			type: 'success'
-		}).show();
-	} else {
-		new Noty({
-			text: 'There is no flashdrive at /Volumes/1540/.',
-			type: 'error'
-		}).show();
+	}
+	//importing pit data
+	if (fs.existsSync("data-collect/pit-scouting/manifest.json")) {
+		pitmanifest = JSON.parse(fs.readFileSync("data-collect/pit-scouting/manifest.json"));
+		for (var team in pitmanifest) {
+			var t = pitmanifest[team]
+			if (fs.existsSync("data-collect/pit-scouting/"+t)) {
+				var data = JSON.parse(fs.readFileSync('data-collect/pit-scouting/'+t));
+				scoutUpdate(data)
+			}
+		}
+	}
+	//importing match data
+	if (fs.existsSync("data-collect/match-scouting/manifest.json")) {
+		manifest = JSON.parse(fs.readFileSync("data-collect/match-scouting/manifest.json"));
+		for (match in manifest) {
+			var t = manifest[match]
+			if (fs.existsSync("data-collect/match-scouting/"+t)) {
+				var data = JSON.parse(fs.readFileSync('data-collect/match-scouting/'+t));
+				if (scoutedIDs.indexOf('#m'+data.match+'num')==-1) {
+					scoutedIDs.push('#m'+data.match+'num');
+				}
+				scoutUpdate(data)
+			}
+		}
+	}
+	createTables()
+}
+
+function scoutUpdate(data) {
+	if (data.scouts!=undefined) {
+		var scouts = JSON.parse(data.scouts);
+		var keys = Object.keys(scouts);
+		for (x in keys) {
+			addToTotal(scouts[keys[x]],data.typ)
+		}
 	}
 }
-function importStand() {
- 	if (fs.existsSync('/Volumes/1540/companal/stand-scouting/manifest.json')) {
- 		var manifest = JSON.parse(fs.readFileSync('/Volumes/1540/companal/stand-scouting/manifest.json'));
-		for (var team in manifest) {
-			if (!fs.existsSync('data-collect/stand-scouting/' + manifest[team]) && fs.existsSync('/Volumes/1540/companal/stand-scouting/' + manifest[team])) {
-				var dataJSON = fs.readFileSync('/Volumes/1540/companal/stand-scouting/' + manifest[team]);
-				var data = JSON.parse(dataJSON);
-				$('#m' + data.matchNumber + data.role).css('background-color', 'blue');
-				$('#m' + data.matchNumber + data.role).css('color', 'white');
-				$('#m' + data.matchNumber + data.role).text(findScout(data.scoutId).name);
-				addToTotal(data.scoutId,' stand');
-				manifestStand.push(manifest[team]);
-				fs.writeFileSync('data-collect/stand-scouting/manifest.json', JSON.stringify(manifestStand));
-				fs.writeFileSync('data-collect/stand-scouting/' + manifest[team],dataJSON);
-			}
-		}
-		new Noty({
-			text: 'Done importing data!',
-			type: 'success'
-		}).show();
- 	} else {
-		new Noty({
-			text: 'There is no flashdrive at /Volumes/1540/.',
-			type: 'error'
-		}).show();
- 	}
-}
+
+//exports data to a flashdrive
 function exportData() {
 	if (fs.existsSync('/Volumes/1540/companal/output')) {
 		fs.copySync('data-collect/stand-scouting/', '/Volumes/1540/companal/output/stand-scouting/');
@@ -245,6 +352,9 @@ function exportData() {
 		}).show();
 	}
 }
+
+//given an ID, returns a Scout with that ID
+//if the ID does not exist, returns null
 function findScout(id) {
 	for (x in scoutList) {
 		if (scoutList[x].id == id) {
@@ -253,6 +363,21 @@ function findScout(id) {
 	}
 	return null;
 }
+
+function backupify(file) {
+	if (!fs.existsSync("data/backup")) {
+		fs.mkdirSync("data/backup");
+	}
+	fs.copySync("data/"+file, "data/backup/"+file);
+	fs.unlinkSync("data/"+file);
+	if (fs.existsSync('data/manifest.json')) {
+		m = JSON.parse(fs.readFileSync('data/manifest.json'));
+		m.splice(m.indexOf(file), 1);
+		fs.writeFileSync('data/manifest.json',JSON.stringify(m));
+	}
+}
+
+//makes it so all tables are hidden
 function resetTables() {
 	$('#members').hide();
 	$('#matches').hide();
@@ -263,17 +388,22 @@ function resetTables() {
 	$('.matches').removeClass('act');
 	$('.schedule').removeClass('act');
 }
-function createTables(a) {
+
+//creates the tables
+function createTables() {
+	$("#membersBody").html("<tbody id='membersBody'></tbody>")
+	$("#matchBody").html("<tbody id='matchBody'></tbody>")
+	$("#scheduleBody").html("<tbody id='scheduleBody'></tbody>")
 	// Members Table
 	for (x in scoutList) {
 		var id = scoutList[x].id;
 		var rs = '#' + id + 'row';
 		var scout = scoutList[x];
-		$('#tbody').append('<tr id="' + id + 'row"></tr>');
+		$('#membersBody').append('<tr id="' + id + 'row"></tr>');
 		if (scout.total < scout.req) {
 			$(rs).append('<td id="' + id + 'req">' + (scout.req - scout.total) + ' more matches</td>');
 		} else {
-			$(rs).append('<td id="' + id + 'req"> style="background-color:#F5FFBF">Completed</td>');
+			$(rs).append('<td id="' + id + 'req" style="background-color:#F5FFBF">Completed</td>');
 		}
 		$(rs).append('<td id="' + id + 'id">' + id + '</td>');
 		$(rs).append('<td id="' + id + 'name">' + scout.name + '</td>');
@@ -281,52 +411,47 @@ function createTables(a) {
 		$(rs).append('<td id="' + id + 'num2">' + scout.stand + '</td>');
 		$(rs).append('<td id="' + id + 'num3">' + scout.total + '</td>');
 	}
-	// Teams Table
-  if (fs.existsSync('scouting/database.json')) {
-    teams = fs.readFileSync('scouting/database.json');
-  } else {
-    teams = JSON.parse(exec('curl -X GET "https://www.thebluealliance.com/api/v3/event/' + a + '/teams/simple" -H "accept: application/json" -H "X-TBA-Auth-Key: p2nxGJxqkJo5a8clThWbi1ZNQhy8CaKlJd4YM5TOFgbR4d7y4KLFU1RWhLANpM8N"', {encoding: 'utf-8'}));
-  }
-	for (x in teams) {
-		var tr = document.createElement('tr');
-		tr.setAttribute('id','r' + team + 'row');
-		$('#robotBody').append(tr);
-		var name = document.createElement('td');
-		name.setAttribute('id','r' + team + 'bot');
-		$('#r' + teams[x].team_number + '-row').append(name);
-		$('#r' + teams[x].team_number + 'bot').text(team);
-		var aname = document.createElement('td');
-		aname.setAttribute('id','r' + team + 'nm');
-		$('#r' + teams[x].team_number + 'row').append(aname);
-		$('#r' + teams[x].team_number + 'nm').text(teams[x].nickname);
-		var pit = document.createElement('td');
-		pit.setAttribute('id','r' + team + 'pit');
-		$('#r' + teams[x].team_number + 'row').append(pit);
-		$('#r' + teams[x].team_number + 'pit').text('False');
-		$('#r' + teams[x].team_number + 'pit').css('background-color','#ffdad1');
-		var stand = document.createElement('td');
-		stand.setAttribute('id','r' + team + 'stand');
-		$('#r' + teams[x].team_number + 'row').append(stand);
-		$('#r' + teams[x].team_number + 'stand').text('0');
-	}
+	// // Teams Table
+  // if (fs.existsSync('scouting/database.json')) {
+  //   teams = fs.readFileSync('scouting/database.json');
+  // } else {
+  //   teams = JSON.parse(exec('curl -X GET "https://www.thebluealliance.com/api/v3/event/' + a + '/teams/simple" -H "accept: application/json" -H "X-TBA-Auth-Key: p2nxGJxqkJo5a8clThWbi1ZNQhy8CaKlJd4YM5TOFgbR4d7y4KLFU1RWhLANpM8N"', {encoding: 'utf-8'}));
+  // }
+	// for (x in teams) {
+	// 	var tr = document.createElement('tr');
+	// 	tr.setAttribute('id','r' + team + 'row');
+	// 	$('#robotBody').append(tr);
+	// 	var name = document.createElement('td');
+	// 	name.setAttribute('id','r' + team + 'bot');
+	// 	$('#r' + teams[x].team_number + '-row').append(name);
+	// 	$('#r' + teams[x].team_number + 'bot').text(team);
+	// 	var aname = document.createElement('td');
+	// 	aname.setAttribute('id','r' + team + 'nm');
+	// 	$('#r' + teams[x].team_number + 'row').append(aname);
+	// 	$('#r' + teams[x].team_number + 'nm').text(teams[x].nickname);
+	// 	var pit = document.createElement('td');
+	// 	pit.setAttribute('id','r' + team + 'pit');
+	// 	$('#r' + teams[x].team_number + 'row').append(pit);
+	// 	$('#r' + teams[x].team_number + 'pit').text('False');
+	// 	$('#r' + teams[x].team_number + 'pit').css('background-color','#ffdad1');
+	// 	var stand = document.createElement('td');
+	// 	stand.setAttribute('id','r' + team + 'stand');
+	// 	$('#r' + teams[x].team_number + 'row').append(stand);
+	// 	$('#r' + teams[x].team_number + 'stand').text('0');
+	// }
 	// Match Table
 	for (match = 1; match <= Object.keys(matchSchedule).length; match++) {
 		var rs = '#m' + match + 'row';
 		$('#matchBody').append('<tr id="m' + match + 'row"></tr>');
 		$(rs).append('<td id="m' + match + 'num">' + match + '</td>');
-    for (i = 0; i < 5; i++) {
-      if (i <= 2) {
-        $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r' + i + '">False</td>');
-      } else {
-        $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b' + i + '">False</td>');
-      }
-    }
-		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r1">False</td>');
-		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r2">False</td>');
-		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'r3">False</td>');
-		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b1">False</td>');
-		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b2">False</td>');
-		// $(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + 'b3">False</td>');
+		all = "r" //alliance
+    	for (i = 1; i < 4; i++) {
+      		$(rs).append('<td style="width: 15%; background-color: #F5FFBF" id="m' + match + all + i + '">False</td>');
+      		if (all=="r" && i==3) {
+				i=0
+				all="b"
+			}
+		}
 	}
 	// Schedule Table
 	for (match = 1; match < Object.keys(matchSchedule).length + 1; match++) {
@@ -340,20 +465,26 @@ function createTables(a) {
 			}
 		}
 	}
+	for (s in scoutedIDs) {
+		$(scoutedIDs[s]).css('background-color','blue');
+		$(scoutedIDs[s]).css('color','white');
+	}
 }
+
+//Adds to a scout's total number of matches scouted
 function addToTotal(id, type) {
 	scout = findScout(id);
 	if (type == 'pit') {
 		scout.pit += 1;
 		scout.total += pitValue;
 		$('#' + id + 'num').text(scout.pit);
-	} else {
+	} else if (type=='stand' || type=='match') {
 		scout.stand += 1;
 		scout.total += 1;
 		$('#' + id + 'num1').text(scout.stand);
 	}
 	$('#' + id + 'num2').text(scout.total);
-	if (!scout.exempt && scout.total >= scout.req) {
+	if (scout.req!=undefined || (!scout.exempt && scout.total >= scout.req)) {
 		scout.exempt=true;
 		$('#' + scout.id + 'req').text('Completed');
 		$('#' + scout.id + 'req').css('background-color','#F5FFBF');
@@ -361,9 +492,12 @@ function addToTotal(id, type) {
 		$('#' + scout.id + 'req').text(scout.req - scout.total + ' more matches');
 	}
 }
+
+//sets the weight of pit scouting to the total matches scouted
 function pitWeight(pw) {
 	pitValue = pw;
 }
+//sets the required number of scouted matches
 function requirement(req) {
 	exemptionReq = req;
 }
@@ -552,7 +686,7 @@ exports.input = function (a, b, c, d, e, f) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.radio = function (a, b, c, d, e, f) {
+exports.radio = function (a, b, c, d, e, f, timestamp) {
   if (init) {
     count++;
     $(a).append(
@@ -573,7 +707,7 @@ exports.radio = function (a, b, c, d, e, f) {
       if (c[i]['color'] == undefined) {
         throw new Error('color cannot be undefined');
       }
-      $('.bg-' + count).append('<span class="btn btn-' + count + '-' + (i + 1) + ' scout-mc scout-mc-' + count + ' btn-outline-' + style + ' ' + (c[i]['class'] == undefined ? '' : c[i]['class']) + '" data-key="' + d + '"><input type="radio" ' + val + ' autocomplete="off" style="display: none;">' + c[i]['text'] + '</span>');
+      $('.bg-' + count).append('<span data-count="' + count + '" color="' + color + '" class="btn btn-' + count + '-' + (i + 1) + ' scout-mc scout-mc-' + count + ' btn-outline-' + style + ' ' + (c[i]['class'] == undefined ? '' : c[i]['class']) + '" data-key="' + d + '"><input type="radio" ' + val + ' autocomplete="off" style="display: none;">' + c[i]['text'] + '</span>');
       if (color.indexOf('#') >= 0) {
         $('.btn-' + count + '-' + (i + 1))
           .css({color: color, borderColor: color})
@@ -590,6 +724,25 @@ exports.radio = function (a, b, c, d, e, f) {
     }
     if (f != undefined) {
       $('.scout-mc-' + count).addClass(f);
+    }
+    if (timestamp==true) {
+      $('.mc-'+count).attr("data-log","{}");
+      $('.mc-'+count).addClass("timestamp");
+      $(a).append(`
+        <h1 style='text-align:center' id='target-`+count+`'>N/A</h1>
+      `);
+      $('.scout-mc-'+count).click(function(){
+        try {
+          co = $(this).attr('data-count');
+          log = JSON.parse($('.mc-'+co).attr("data-log"));
+          log[time]=$(this).text();
+          $('.mc-'+co).attr('data-log',JSON.stringify(log));
+          $('#target-'+co).text($(this).text());
+          $('#target-'+co).css("class",$(this).attr("color"));
+        } catch(err) {
+          console.log('nope');
+        }
+      });
     }
   } else {
     throw new Error('scout.init() not instantiated');
@@ -671,6 +824,34 @@ exports.textarea = function (a, b, c, d, e, f) {
     throw new Error('scout.init() not instantiated');
   }
 };
+
+// teleTime should usually be 30
+// endTime should usually be 230
+exports.timer = function (placeToPut, textPlaceToPut, textDisplay, teleTime, endTime) {
+  if (init) {
+    count++
+    time = endTime;
+    interval = undefined
+    function upTime() {
+      time-=1;
+      if (time<=(endTime-teleTime)) {
+        $("#timeDisplay").css("color","black");
+      }
+      $("#timeDisplay").text(time);
+      if (time==0) {
+        clearInterval(interval);
+      }
+    }
+    $(textPlaceToPut).prepend(`<h1 id="timeDisplay" style="text-align:center">`+endTime+`</h1>`)
+    $(placeToPut).append(`<div style="text-align:center;"><input type='button' class='timeButton btn btn-outline-success' value='`+textDisplay+`'/></div><br><br>`);
+    $(".timeButton").click(function(){
+      $(this).hide();
+      $("#timeDisplay").css("color","red");
+      interval = setInterval(upTime,1000);
+    });
+  }
+}
+
 // *****************************************************************************
 // Other functions:
 exports.chart = function (a, b) {
@@ -679,7 +860,6 @@ exports.chart = function (a, b) {
 exports.done = function (a, b, c) {
   if (init) {
     count++;
-    match++;
     if (arguments.length == 1 && b == undefined) {
       b = true;
     }
@@ -735,7 +915,7 @@ exports.init = function (a, b) {
   initCount++;
   isSave = b ? true : false;
   if (initCount == 1) {
-    if (a == 'stand' || 'pit') {
+    if (a == 'stand' || 'pit' || 'match') {
       var scoutDir = './scouting';
       var dataDir = './data';
       if (!fs.existsSync(scoutDir)){
@@ -863,6 +1043,9 @@ exports.init = function (a, b) {
       if (!fs.existsSync('./data-collect/pit-scouting')) {
         fs.mkdirSync('./data-collect/pit-scouting');
       }
+			if (!fs.existsSync('./data-collect/match-scouting')) {
+        fs.mkdirSync('./data-collect/match-scouting');
+      }
       if (!fs.existsSync('./data-collect/stand-scouting')) {
         fs.mkdirSync('./data-collect/stand-scouting');
       }
@@ -886,8 +1069,16 @@ exports.init = function (a, b) {
       }
     } else if (a == 'blank') {
       init = true;
+    } else if (a == 'match') {
+      if (!fs.existsSync("./scouting/match.txt")) {
+        fs.writeFileSync("./scouting/match.txt",1);
+      }
+      match_data = true;
+      init = true;
+      match = fs.readFileSync("./scouting/match.txt","utf8");
+      $("body").append(`<h3 style='position:absolute;right:10px;top:5px'>Match: `+match+`</h3>`)
     } else {
-      throw new Error('Use \'scout\', \'pit\', \'database\', \'analysis\', \'blank\'.');
+      throw new Error('Use \'scout\', \'pit\', \'match\', \'database\', \'analysis\', \'blank\'.');
       init = false;
     }
     return init;
@@ -895,63 +1086,66 @@ exports.init = function (a, b) {
     throw new Error('scout.init() instantiated ' + initCount + ' times');
   }
 };
-exports.login = function (a, b, c) {
+exports.login = function (a, b, required, jsonkey, c) {
   if (init) {
     count++;
     var num = count;
     $(a).append(
-      `<div class="input-group" style="text-align: center;">
-        <input class="form-control l-` + num + `" type="number">
-        <button type="button" class="btn btn-outline-success ls-` + count + `">Login</button>
-      </div>
-      <br>
-      <div style="text-align: center;">
-        <h1 class="l-greeting" style="display: none;">Welcome, </h1>
-      </div>
-      <div class="role" style="display: none; text-align: center;">
-        <div class="btn-group" data-toggle="buttons">
-          <span class="btn btn-outline-danger">
-            <input type="radio" class="btn-role" autocomplete="off" value="r1">Red 1
-          </span>
-          <span class="btn btn-outline-danger">
-            <input type="radio" class="btn-role" autocomplete="off" value="r2">Red 2
-          </span>
-          <span class="btn btn-outline-danger">
-            <input type="radio" class="btn-role" autocomplete="off" value="r3">Red 3
-          </span>
-          <span class="btn btn-outline-info">
-            <input type="radio" class="btn-role" autocomplete="off" value="b1">Blue 1
-          </span>
-          <span class="btn btn-outline-info">
-            <input type="radio" class="btn-role" autocomplete="off" value="b2">Blue 2
-          </span>
-          <span class="btn btn-outline-info">
-            <input type="radio" class="btn-role" autocomplete="off" value="b3">Blue 3
-          </span>
-        </div>
-        <br>
-        <br>
-        <button type="button" class="btn btn-outline-success role-submit">Submit</button>
-      </div>`
+      `<div class = 'login-`+ num +`'>
+				<div class="input-group" style="text-align: center;">
+	        <input class="form-control l-` + num + `" type="number">
+	        <button type="button" class="btn btn-outline-success ls-` + count + `">Login</button>
+	      </div>
+	      <br>
+	      <div style="text-align: center;">
+	        <h1 class="l-greeting" style="display: none;">Welcome, </h1>
+	      </div>
+	      <div class="role" style="display: none; text-align: center;">
+	        <div class="btn-group" data-toggle="buttons">
+	          <span class="btn btn-outline-danger">
+	            <input type="radio" class="btn-role" autocomplete="off" value="r1">Red 1
+	          </span>
+	          <span class="btn btn-outline-danger">
+	            <input type="radio" class="btn-role" autocomplete="off" value="r2">Red 2
+	          </span>
+	          <span class="btn btn-outline-danger">
+	            <input type="radio" class="btn-role" autocomplete="off" value="r3">Red 3
+	          </span>
+	          <span class="btn btn-outline-info">
+	            <input type="radio" class="btn-role" autocomplete="off" value="b1">Blue 1
+	          </span>
+	          <span class="btn btn-outline-info">
+	            <input type="radio" class="btn-role" autocomplete="off" value="b2">Blue 2
+	          </span>
+	          <span class="btn btn-outline-info">
+	            <input type="radio" class="btn-role" autocomplete="off" value="b3">Blue 3
+	          </span>
+	        </div>
+	        <br>
+	        <br>
+	        <button type="button" class="btn btn-outline-success role-submit">Submit</button>
+	      </div>
+			</div>`
     );
     $('.btn-next, .btn-back').hide();
     $('.ls-' + count).click(function () {
       var act = $('.l-' + num).val()
+      if (scouts==undefined && fs.existsSync("./scouting/scouts.json")) {
+        scouts=JSON.parse(fs.readFileSync("./scouting/scouts.json"));
+      }
       if (scouts.hasOwnProperty(act)) {
-        loginCount++;
-        if (loginCount == 1) {
-          $('.l-greeting')
-            .append(scouts[act] + '!')
-            .fadeIn();
-          json.scout = act;
-          save();
-          if (isStand) {
-            $('.btn-next, .btn-back').show();
-          } else {
-            $('.btn-next').show();
-          }
-          $('.num-change').text(scouts[act]);
+        $('.l-greeting')
+          .append(scouts[act] + '!')
+          .fadeIn();
+				scoutKeys[jsonkey] = act;
+        json["scouts"] = JSON.stringify(scoutKeys);
+        save();
+        if (isStand) {
+          $('.btn-next, .btn-back').show();
+        } else {
+          $('.btn-next').show();
         }
+        $('.num-change').text(scouts[act]);
       } else if (act == b) {
         $('.role').fadeIn();
       } else {
@@ -964,6 +1158,9 @@ exports.login = function (a, b, c) {
     if (c != undefined) {
       $('.l-' + num).addClass(c);
     }
+		// if (required) {
+    //   required.push(d);
+    // }
   } else {
     throw new Error('scout.init() not instantiated');
   }
@@ -1050,6 +1247,30 @@ exports.text = function (a, b, c, d) {
     throw new Error('scout.init() is not instantiated');
   }
 };
+exports.flashdrive = function() {
+	// if (init) {
+		addSettings();
+ 		$(".settings-menu").append(
+			`<a class="dropdown-item save-to-flash" href="#">Save to Flashdrive</a>`
+		);
+	// }
+}
+exports.update = function() {
+	// if (init) {
+		addSettings();
+		$(".settings-menu").append(
+			`<a class="dropdown-item update" href="#">Update</a>`
+		);
+	// }
+};
+exports.bluetooth = function() {
+  // if (init) {
+    addSettings();
+    $(".settings-menu").append(
+      `<a class="dropdown-item bluetooth" href="#">Bluetooth Sync</a>`
+    );
+  // }
+}
 // *****************************************************************************
 // exports.concat = function (a, b) {
 //   if (a == 'stand' || a == 'pit') {
@@ -1074,12 +1295,12 @@ exports.text = function (a, b, c, d) {
 //   }
 // };
 // *****************************************************************************
-exports.database = function (a) {
+exports.database = function () {
+	execAsync("C:/Python27/python.exe Windows_Bluetooth_Server.py") //runs the server bluetooth code
 	importScouts();
 	importSchedule();
 	setExemptions(exemptionReq);
-	importPitManifest();
-	importStandManifest();
+	//adds all of the code to the html
 	$(function () {
 		$('head').append(`
 			<style>
@@ -1118,30 +1339,23 @@ exports.database = function (a) {
 			</style>`
 		);
 		$('body').append(`
+			<br><br><br><br><br><br><br><br><br>
 			<nav class='center' style='background-color:#ededed;z-index:1;width:100%' data-spy='affix'>
         <br>
 				<h2 style='position:relative;top:14px;'>Database App</h2>
 				<br>
-				<button class='btn-warning btn pit' type='button' class='btn-primary btn.lg'>Import Pit Data</button>
-				<button class='btn-warning btn stand' type='button' class='btn-primary btn.lg'>Import Stand Data</button>
-				<button class='btn-success btn export' type='button' class='btn-primary btn.lg'>Export Data</button>
+				<!--<button class='btn-warning btn pit' type='button'>Import Pit Data</button>
+				<button class='btn-warning btn stand' type='button'>Import Stand Data</button>-->
+				<button class='btn-danger btn reload' type='button'>Reload</button>
+				<button class='btn-success btn export' type='button'>Export Data</button>
 				<br>
 				<br>
 				<button class='sect act btn-primary btn members' type='button' style='margin-bottom: 10px;'>Members</button>
-				<button class='sect btn-primary btn teams' type='button' style='margin-bottom: 10px;'>Teams</button>
+				<!--<button class='sect btn-primary btn teams' type='button' style='margin-bottom: 10px;'>Teams</button>-->
 				<button class='sect btn-primary btn matches' type='button' style='margin-bottom: 10px;'>Matches</button>
 				<button class='sect btn-primary btn schedule' type='button' style='margin-bottom:10px'>Match Schedule</button>
 				<br>
 			</nav>
-			<br>
-      <br>
-      <br>
-      <br>
-      <br>
-      <br>
-      <br>
-      <br>
-      <br>
 			<div id='members' class='center'>
 				<h3>Members</h3>
 				<table style='width: 80%;border: 3px black solid; margin-left: auto; margin-right: auto;' id='scoutingTable' border='1' class='center-block table table-hover table-bordered'>
@@ -1155,11 +1369,11 @@ exports.database = function (a) {
     						<th>Total Scouted</th>
 						</tr>
 					</thead>
-					<tbody id='tbody'>
+					<tbody id='membersBody'>
 					</tbody>
 				</table>
 			</div>
-			<div hidden id='teams' class='center'>
+			<!--<div id='teams' class='center'>
 				<h3>Teams</h3>
 				<table style='width: 80%;border: 3px black solid; margin-left: auto; margin-right;' id='robotTable' border='1' class='center-block table table-hover table-bordered'>
 					<thead>
@@ -1173,8 +1387,8 @@ exports.database = function (a) {
 					<tbody id='robotBody'>
 					</tbody>
 				</table>
-			</div>
-			<div hidden id='matches' class='center'>
+			</div>-->
+			<div id='matches' class='center'>
 				<h3>Scouted Matches</h3>
 				<table style='width: 80%;border: 3px black solid; margin-left: auto; margin-right: auto;' id='matchTable' border='1' class='center-block table table-hover table-bordered'>
 					<thead>
@@ -1192,7 +1406,7 @@ exports.database = function (a) {
 					</tbody>
 				</table>
 			</div>
-			<div hidden id='schedule' class='center'>
+			<div id='schedule' class='center'>
 				<h3>Match Schedule</h3>
 				<table style='width: 80%;border: 3px black solid; margin-left: auto; margin-right: auto;' id='scheduleTable' border='1' class='center-block table table-hover table-bordered'>
 					<thead>
@@ -1220,16 +1434,19 @@ exports.database = function (a) {
 		$('.export').click(function(){
 			exportData();
 		});
+		$('.reload').click(function(){
+			reload();
+		})
 		$('.members').click(function(){
 			resetTables();
 			$('#members').show();
 			$('.members').addClass('act');
 		});
-		$('.teams').click(function(){
-			resetTables();
-			$('#teams').show();
-			$('.teams').addClass('act');
-		});
+// 		$('.teams').click(function(){
+// 			resetTables();
+// 			$('#teams').show();
+// 			$('.teams').addClass('act');
+// 		});
 		$('.matches').click(function(){
 			resetTables();
 			$('#matches').show();
@@ -1240,29 +1457,9 @@ exports.database = function (a) {
 			$('#schedule').show();
 			$('.schedule').addClass('act');
 		});
-		createTables(a);
-		// Load Stand
-		for (x in manifestStand) {
-			if (fs.existsSync('data-collect/stand-scouting/' + manifestStand[x])) {
-				var data = JSON.parse(fs.readFileSync('data-collect/stand-scouting/' + manifestStand[x]));
-				addToTotal(data.scoutId,'stand');
-				$('#m' + data.matchNumber + data.role).css('background-color','blue');
-				$('#m' + data.matchNumber + data.role).css('color','white');
-				$('#m' + data.matchNumber + data.role).text(findScout(data.scoutId).name);
-			}
-		}
-		// Load Pit
-		for (x in manifestPit) {
-			if (fs.existsSync('data-collect/pit-scouting/' + manifestPit[x])) {
-				var data = JSON.parse(fs.readFileSync('data-collect/pit-scouting/' + manifestPit[x]));
-				var scoutOne = findScout(data.scoutIds[0]);
-				var scoutTwo = findScout(data.scoutIds[1]);
-				addToTotal(scoutOne.id,'pit');
-          		if (scoutTwo != null) {
-					addToTotal(scoutTwo.id,'pit');
-				}
-			}
-		}
+		createTables();
+		resetTables();
+		reload();
 	});
 };
 // *****************************************************************************
@@ -1333,11 +1530,16 @@ $(document).ready(function () {
   });
   $('.scout-mc').click(function () {
     var name = $(this).attr('data-key');
-    var value = $(this).children().attr('value') == undefined ? $(this).text() : $(this).children().val();
-    // typeof value == 'string' && value != 'true' && value != 'false' ?
-    //   /* eval('json.' + name + ' = "' + value + '"') */ json[name] = '"' + value + '"' :
-      json[name] = value;
+    var value;
+    if ($(this).parent().parent().attr("data-log")==undefined) {
+      value = $(this).children().attr('value') == undefined ? $(this).text() : $(this).children().val();
+      typeof value == 'string' && value != 'true' && value != 'false' ?
+        /* eval('json.' + name + ' = "' + value + '"') */ json[name] = '"' + value + '"' :
+        json[name] = value;
       // eval('json.' + name + ' = ' + value);
+    } else {
+      json[name] = $(this).parent().parent().attr("data-log");
+    }
     save();
   });
   $('.scout-t').keyup(function () {
@@ -1372,21 +1574,26 @@ $(document).ready(function () {
   });
   $('.btn-done').click(function () {
     var reqTrue = [];
-    for (i = 0; i < required.length; i++) {
-      if (!json.hasOwnProperty(required[i])) {
-        new Noty({
-          text: 'Please complete all required fields.',
-          type: 'error'
-        }).show();
-        break;
+    var i = 0;
+    do {
+      if (required.length>0) {
+        if (!json.hasOwnProperty(required[i])) {
+          new Noty({
+            text: 'Please complete all required fields.',
+            type: 'error'
+          }).show();
+          break;
+        }
+        reqTrue.push(true);
       }
-      reqTrue.push(true);
-      if (reqTrue[(required.length - 1)]) {
+      if (required.length==0 || reqTrue[(required.length - 1)]) {
         save();
+        match++;
         fs.writeFileSync('./scouting/match.txt', match);
         window.location.reload();
       }
-    }
+      i++;
+    } while (i<required.length);
   });
   $('.btn-next').click(function () {
     var page = $(this).attr('data-page');
@@ -1429,6 +1636,79 @@ $(document).ready(function () {
     window.location.reload();
   });
 // *****************************************************************************
+  $('.save-to-flash').click(function () {
+  	var PSpath = "";
+  	var dirpath = "";
+  	if (isStand) {
+  		PSpath = "stand-scouting";
+  	} else {
+  		PSpath = "pit-scouting";
+  	}
+	  var manifest;
+	  if (fs.existsSync('data/manifest.json')) {
+		    manifest = JSON.parse(fs.readFileSync("data/manifest.json"));
+	  } else {
+		    manifest = []
+	  }
+	  if (navigator.platform=="MacIntel") {
+		    dirpath = "/Volumes/1540";
+	  } else if (navigator.platform=="Win32") {
+		    if (fs.existsSync("K:/companal")) {
+			       dirpath = "K:";
+		    } else if (fs.existsSync("D:/companal")) {
+			       dirpath = "D:";
+		    }
+	  }
+	  if (fs.existsSync(dirpath)) {
+		    var array = JSON.parse(fs.readFileSync(data+"/companal/"+PSpath+"/manifest.json"));
+		    for (x in manifest) {
+			       if (!fs.existsSync(data+"/companal/"+PSpath+"/"+manifest[x])) {
+				           array.push(manifest[x]);
+				           fs.copySync('data/'+manifest[x], data+'/companal/'+PSpath+'/'+manifest[x]);
+			       }
+		    }
+		    fs.writeFileSync(dirpath+"/companal/"+PSpath+"/"+JSON.stringify(array));
+		    console.log("Files saved!");
+	  } else {
+		    console.log("The flashdrive 1540 is not inputed into the tablet.");
+	  }
+  });
+  // *****************************************************************************
+  $('.update').click(function () {
+	   if (navigator.onLine) {
+  		exec("git reset --hard");
+  		exec("git pull");
+  		exec("npm uninstall scouting");
+  		exec("npm install scouting --save");
+  		setTimeout(window.location.reload(),2000);
+	   } else {
+		  console.log("You don't have internet connection!");
+	   }
+  });
+// *****************************************************************************
+  $('.bluetooth').click(function () {
+		if (fs.existsSync("data/manifest.json")) {
+			m = JSON.parse(fs.readFileSync("data/manifest.json"));
+			for (stuff in m) {
+				if (fs.existsSync("data/"+m[stuff])) {
+					data = JSON.stringify(JSON.parse(fs.readFileSync("data/"+m[stuff])))
+					try {
+						exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
+						backupify(m[stuff]);
+					} catch(_) {
+						try {
+							exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
+							backupify(m[stuff]);
+						} catch(_) {
+							console.log("lol you failed")
+							fs.writeFileSync("data/"+m[stuff],data);
+						}
+					}
+				}
+			}
+		}
+  });
+// *****************************************************************************
   $('.' + pages[0]).show();
   $('.page-pane').each(function () {
     if ($(this).attr('class').substr(10) == pages[0]) {
@@ -1467,12 +1747,17 @@ $(document).ready(function () {
 // *****************************************************************************
   $('.num-change').click(function () {
     $(this).attr('contenteditable', 'true');
-    $(this).text(json.scout);
+		var scoutText = "";
+		var keys = Object.keys(scoutKeys);
+		for (s in keys) {
+    	scoutText += findScout(scoutKeys[keys[s]]).name + ", "
+		}
+		$(this).text(scoutText.slice(0,-2));
   });
   $('.num-change').keyup(function (event) {
     if (event.which == 13) {
       if (scouts[$('.num-change').val()] != undefined) {
-        json.scout = $('.num-change').val();
+        json[scout] = JSON.stringify({"scout":$('.num-change').val()});
         $('.num-change').val(scouts[$('.num-change').val()]);
         $(this).attr('contenteditable', 'false');
       } else {
