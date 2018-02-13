@@ -68,7 +68,7 @@ function save() {
     manifest = JSON.parse(fs.readFileSync('./data/manifest.json', 'utf-8'));
     if (isStand) {
       json.team = team;
-			json.typ = "stand
+			json.typ = "stand";
       json.role = role;
       json.match = $('.matchnum').val();
       fs.writeFileSync('./data/m' + $('.matchnum').val() + '-' + role + '-' + team + '.json', JSON.stringify(json));
@@ -90,12 +90,12 @@ function save() {
       }
     } else {
       if (!fileExist) {
-        // filename = new Noty({
-        //   text: 'Filename: <input class="form-control filename" type="text">',
-        //   type: 'success',
-        //   closeWith: ['button'],
-        //   layout: 'center'
-        // }).show();
+        filename = new Noty({
+          text: 'Filename: <input class="form-control filename" type="text">',
+          type: 'success',
+          closeWith: ['button'],
+          layout: 'center'
+        }).show();
         $('.filename').keyup(function () {
           if (event.which == 13) {
             filenameString = $(this).val();
@@ -1296,7 +1296,7 @@ exports.bluetooth = function() {
 // };
 // *****************************************************************************
 exports.database = function () {
-	execAsync("C:/Python27/python.exe Windows_Bluetooth_Server.py") //runs the server bluetooth code
+	execAsync("C:/Python27/python.exe node_modules/scouting/Windows_Bluetooth_Server.py") //runs the server bluetooth code
 	importScouts();
 	importSchedule();
 	setExemptions(exemptionReq);
@@ -1693,11 +1693,11 @@ $(document).ready(function () {
 				if (fs.existsSync("data/"+m[stuff])) {
 					data = JSON.stringify(JSON.parse(fs.readFileSync("data/"+m[stuff])))
 					try {
-						exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
+						exec('C:/Python27/python.exe node_modules/scouting/Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
 						backupify(m[stuff]);
 					} catch(_) {
 						try {
-							exec('C:/Python27/python.exe Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
+							exec('C:/Python27/python.exe node_modules/scouting/Windows_Bluetooth_Client.py '+uuid+" "+addr+" "+encodeURIComponent(data));
 							backupify(m[stuff]);
 						} catch(_) {
 							console.log("lol you failed")
