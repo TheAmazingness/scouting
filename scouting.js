@@ -468,6 +468,9 @@ function createTables() {
 	for (s in scoutedIDs) {
 		$(scoutedIDs[s]).css('background-color','blue');
 		$(scoutedIDs[s]).css('color','white');
+		if (scoutedIDs[s][0]=="m") {
+			$(scoutedIDs[s]).text('False');
+		}
 	}
 }
 
@@ -556,22 +559,34 @@ exports.checkbox = function (a, b, c, d, e, f) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.counter = function (a, b, c, d, e, f) {
+exports.counter = function (a, b, c, d, e, f, compact) {
   if (init) {
     count++;
-    $(a).append(
-      `<div class="counter co-` + count + `" style="text-align: center;">
-        <h3>` + b + `</h3>
-        <input class="counter-input ` + d + `-co" value="0" style="border: none; text-align: center; font-weight: bold; font-size: 24pt;" readonly="readonly">
-        <br>
-        <br>
-        <div>
-        <button type="button" class="btn btn-outline-success btn-lg btn-increment btn-` + d + `-up scout-co" style="margin-right: 5px;" data-key="` + d + `">+` + c + `</button>
-        <button type="button" class="btn btn-outline-danger btn-lg btn-increment btn-` + d + `-down scout-co" style="margin-right: 5px;" data-key="` + d + `">-` + c + `</button>
-        <br>
-        <br>
-      </div>`
-    );
+		if (!compact) {
+	    $(a).append(
+	      `<div class="counter co-` + count + `" style="text-align: center;">
+	        <h3>` + b + `</h3>
+	        <input class="counter-input ` + d + `-co" value="0" style="border: none; text-align: center; font-weight: bold; font-size: 24pt;" readonly="readonly">
+	        <br>
+	        <br>
+	        <div>
+	        <button type="button" class="btn btn-outline-success btn-lg btn-increment btn-` + d + `-up scout-co" style="margin-right: 5px;" data-key="` + d + `">+` + c + `</button>
+	        <button type="button" class="btn btn-outline-danger btn-lg btn-increment btn-` + d + `-down scout-co" style="margin-right: 5px;" data-key="` + d + `">-` + c + `</button>
+	        <br>
+	        <br>
+	      </div>`
+	    );
+		} else {
+			$(a).append(
+	      `<div class="counter co-` + count + `" style="text-align: center;">
+					<input class="counter-input ` + d + `-co" value="0" style="border: none; text-align: center; font-weight: bold; font-size: 24pt;" readonly="readonly">
+					<div>
+	        <button type="button" class="btn btn-outline-success btn-increment btn-` + d + `-up scout-co" style="margin-right: 5px;" data-key="` + d + `">+` + c + `</button>
+	        <button type="button" class="btn btn-outline-danger btn-increment btn-` + d + `-down scout-co" style="margin-right: 5px;" data-key="` + d + `">-` + c + `</button>
+	        </div>
+	      </div>`
+	    );
+		}
     $('.btn-' + d + '-up').click(function () {
       var val = parseInt($('.' + d + '-co').val());
       $('.' + d + '-co').val(val + parseInt(c));
