@@ -343,12 +343,12 @@ function scoutUpdate(data) {
 //exports data to a flashdrive
 function exportData() {
 	if (fs.existsSync('/Volumes/1540/companal/output')) {
-		fs.copySync('data-collect/stand-scouting/', 'K:/companal/output/stand-scouting/');
-		fs.copySync('data-collect/pit-scouting/', 'K:/companal/output/pit-scouting/');
-		fs.copySync('data-collect/match-scouting', 'K:/companal/output/match-scouting')
+		fs.copySync('data-collect/stand-scouting/', 'D:/companal/output/stand-scouting/');
+		fs.copySync('data-collect/pit-scouting/', 'D:/companal/output/pit-scouting/');
+		fs.copySync('data-collect/match-scouting', 'D:/companal/output/match-scouting')
 	} else {
 		new Noty({
-			text: 'Cannot find flashdrive at K.',
+			text: 'Cannot find flashdrive.',
 			type: 'error'
 		}).show();
 	}
@@ -1491,24 +1491,24 @@ $(document).ready(function () {
     save();
   }
 // *****************************************************************************
-  $('.scout-c').click(function () {
-    var name = $(this).attr('data-key');
-    var value = $(this).children().attr('value') == undefined ? $(this).text() : $(this).children().val();
-    if (json[name] == undefined) {
-      json[name] = [];
-    }
-    var index = json[name].indexOf(value);
-    if (!$(this).hasClass('active')) {
-      // typeof value == 'string' && value != 'true' && value != 'false' ?
-      //   cArr.push('"' + value + '"') :
-      //   cArr.push(value);
-      json[name].push(value);
-    } else {
-      json[name].splice(index, 1);
-    }
-    // eval('json.' + name + ' = [' + cArr + ']');
-    save();
-  });
+	$('.scout-c').click(function () {
+	 var name = $(this).attr('data-key');
+	 var value = $(this).children().attr('value') == undefined ? $(this).text() : $(this).children().val();
+	 if (json[name] == undefined) {
+		 json[name] = [];
+	 }
+	 var index = json[name].indexOf(value);
+	 if (!$(this).hasClass('active')) {
+		 // typeof value == 'string' && value != 'true' && value != 'false' ?
+		 //   cArr.push('"' + value + '"') :
+		 //   cArr.push(value);
+		 json[name].push(value);
+	 } else {
+		 json[name].splice(index, 1);
+	 }
+	 // eval('json.' + name + ' = [' + cArr + ']');
+	 save();
+	});
   $('.scout-co').click(function () {
     var name = $(this).attr('data-key');
     var value = $('.' + $(this).attr('data-key') + '-co').val();
@@ -1713,7 +1713,11 @@ $(document).ready(function () {
 	$('.import-data').click(function() {
 		path = "/Volumes/1540/"
 		if (navigator.platform=="Win32") {
-			path = "K:/"
+			if (fs.existsSync("D:/companal")) {
+				path = "D:/"
+			} else {
+				path = "K:/"
+			}
 		}
 		fs.copySync(path+"companal/output/stand-scouting","data");
 		fs.copySync(path+"companal/output/pit-scouting","pit-data");
