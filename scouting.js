@@ -45,7 +45,7 @@ var settings = false;
 var scoutKeys = {}
 var scoutedIDs = []
 var uuid = "66216088-cc64-4a35-969f-58336ef03732" // for bluetooth
-var addr = "80:19:34:19:20:FC"
+var addr = "80:19:34:19:06:3A"
 // *****************************************************************************
 // Given that there is no settings dropdown button, addSettings() creates a dropdown menu.
 // Otherwise, this function does nothing
@@ -1249,11 +1249,11 @@ exports.page = function (a, b, c) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.text = function (a, b, c, d) {
+exports.text = function (a, b, c, d, color) {
 	if (init) {
 		count++;
 		$(a).append(
-			`<p class="text-` + count + `" style="text-align: center; font-size: ` + c + `pt;">` + b + `</p>`
+			`<p class="text-` + count + `" style="text-align: center; color: `+color+`; font-size: ` + c + `pt;">` + b + `</p>`
 		);
     if (d != undefined) {
       $('.text-' + count).addClass(d);
@@ -1588,27 +1588,29 @@ $(document).ready(function () {
     }
   });
   $('.btn-done').click(function () {
-    var reqTrue = [];
-    var i = 0;
-    do {
-      if (required.length>0) {
-        if (!json.hasOwnProperty(required[i])) {
-          new Noty({
-            text: 'Please complete all required fields.',
-            type: 'error'
-          }).show();
-          break;
-        }
-        reqTrue.push(true);
-      }
-      if (required.length==0 || reqTrue[(required.length - 1)]) {
+    // var reqTrue = [];
+    // var i = 0;
+    // do {
+    //   if (required.length>0) {
+    //     if (!json.hasOwnProperty(required[i])) {
+    //       new Noty({
+    //         text: 'Please complete all required fields.',
+    //         type: 'error'
+    //       }).show();
+    //       break;
+    //     }
+    //     reqTrue.push(true);
+    //   }
+    //   if (required.length==0 || reqTrue[(required.length - 1)]) {
         save();
-        match++;
-        fs.writeFileSync('./scouting/match.txt', match);
+				if (isStand) {
+        	match++;
+        	fs.writeFileSync('./scouting/match.txt', match);
+				}
         window.location.reload();
-      }
-      i++;
-    } while (i<required.length);
+    //   }
+    //   i++;
+    // } while (i<required.length);
   });
   $('.btn-next').click(function () {
     var page = $(this).attr('data-page');
