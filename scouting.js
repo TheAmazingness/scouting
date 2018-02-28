@@ -343,11 +343,12 @@ function scoutUpdate(data) {
 //exports data to a flashdrive
 function exportData() {
 	if (fs.existsSync('/Volumes/1540/companal/output')) {
-		fs.copySync('data-collect/stand-scouting/', '/Volumes/1540/companal/output/stand-scouting/');
-		fs.copySync('data-collect/pit-scouting/', '/Volumes/1540/companal/output/pit-scouting/');
+		fs.copySync('data-collect/stand-scouting/', 'K:/companal/output/stand-scouting/');
+		fs.copySync('data-collect/pit-scouting/', 'K:/companal/output/pit-scouting/');
+		fs.copySync('data-collect/match-scouting', 'K:/companal/output/match-scouting')
 	} else {
 		new Noty({
-			text: 'Cannot find flashdrive at /Volumes/1540/.',
+			text: 'Cannot find flashdrive at K.',
 			type: 'error'
 		}).show();
 	}
@@ -1286,6 +1287,12 @@ exports.bluetooth = function() {
     );
   // }
 }
+exports.import = function() {
+	addSettings();
+	$(".settings-menu").append(
+		`<a class="dropdown-item import-data" href="#">Import Data</a>`
+	);
+}
 // *****************************************************************************
 // exports.concat = function (a, b) {
 //   if (a == 'stand' || a == 'pit') {
@@ -1703,6 +1710,15 @@ $(document).ready(function () {
 	   }
   });
 // *****************************************************************************
+	$('.import-data').click(function() {
+		path = "/Volumes/1540/"
+		if (navigator.platform=="Win32") {
+			path = "K:/"
+		}
+		fs.copySync(path+"companal/output/stand-scouting","data");
+		fs.copySync(path+"companal/output/pit-scouting","pit-data");
+		fs.copySync(path+"companal/output/match-scouting","match-data");
+	});
   $('.bluetooth').click(function () {
 		if (fs.existsSync("data/manifest.json")) {
 			m = JSON.parse(fs.readFileSync("data/manifest.json"));
