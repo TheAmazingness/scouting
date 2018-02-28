@@ -45,7 +45,7 @@ var settings = false;
 var scoutKeys = {}
 var scoutedIDs = []
 var uuid = "66216088-cc64-4a35-969f-58336ef03732" // for bluetooth
-var addr = "80:19:34:19:20:FC"
+var addr = "80:19:34:19:06:3A"
 // *****************************************************************************
 // Given that there is no settings dropdown button, addSettings() creates a dropdown menu.
 // Otherwise, this function does nothing
@@ -343,11 +343,12 @@ function scoutUpdate(data) {
 //exports data to a flashdrive
 function exportData() {
 	if (fs.existsSync('/Volumes/1540/companal/output')) {
-		fs.copySync('data-collect/stand-scouting/', '/Volumes/1540/companal/output/stand-scouting/');
-		fs.copySync('data-collect/pit-scouting/', '/Volumes/1540/companal/output/pit-scouting/');
+		fs.copySync('data-collect/stand-scouting/', 'K:/companal/output/stand-scouting/');
+		fs.copySync('data-collect/pit-scouting/', 'K:/companal/output/pit-scouting/');
+		fs.copySync('data-collect/match-scouting', 'K:/companal/output/match-scouting')
 	} else {
 		new Noty({
-			text: 'Cannot find flashdrive at /Volumes/1540/.',
+			text: 'Cannot find flashdrive at K.',
 			type: 'error'
 		}).show();
 	}
@@ -468,6 +469,9 @@ function createTables() {
 	for (s in scoutedIDs) {
 		$(scoutedIDs[s]).css('background-color','blue');
 		$(scoutedIDs[s]).css('color','white');
+		if (scoutedIDs[s][0]=="m") {
+			$(scoutedIDs[s]).text('False');
+		}
 	}
 }
 
@@ -556,22 +560,34 @@ exports.checkbox = function (a, b, c, d, e, f) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.counter = function (a, b, c, d, e, f) {
+exports.counter = function (a, b, c, d, e, f, compact) {
   if (init) {
     count++;
-    $(a).append(
-      `<div class="counter co-` + count + `" style="text-align: center;">
-        <h3>` + b + `</h3>
-        <input class="counter-input ` + d + `-co" value="0" style="border: none; text-align: center; font-weight: bold; font-size: 24pt;" readonly="readonly">
-        <br>
-        <br>
-        <div>
-        <button type="button" class="btn btn-outline-success btn-lg btn-increment btn-` + d + `-up scout-co" style="margin-right: 5px;" data-key="` + d + `">+` + c + `</button>
-        <button type="button" class="btn btn-outline-danger btn-lg btn-increment btn-` + d + `-down scout-co" style="margin-right: 5px;" data-key="` + d + `">-` + c + `</button>
-        <br>
-        <br>
-      </div>`
-    );
+		if (!compact) {
+	    $(a).append(
+	      `<div class="counter co-` + count + `" style="text-align: center;">
+	        <h3>` + b + `</h3>
+	        <input class="counter-input ` + d + `-co" value="0" style="border: none; text-align: center; font-weight: bold; font-size: 24pt;" readonly="readonly">
+	        <br>
+	        <br>
+	        <div>
+	        <button type="button" class="btn btn-outline-success btn-lg btn-increment btn-` + d + `-up scout-co" style="margin-right: 5px;" data-key="` + d + `">+` + c + `</button>
+	        <button type="button" class="btn btn-outline-danger btn-lg btn-increment btn-` + d + `-down scout-co" style="margin-right: 5px;" data-key="` + d + `">-` + c + `</button>
+	        <br>
+	        <br>
+	      </div>`
+	    );
+		} else {
+			$(a).append(
+	      `<div class="counter co-` + count + `" style="text-align: center;">
+					<input class="counter-input ` + d + `-co" value="0" style="border: none; text-align: center; font-weight: bold; font-size: 24pt;" readonly="readonly">
+					<div>
+	        <button type="button" class="btn btn-outline-success btn-increment btn-` + d + `-up scout-co" style="margin-right: 5px;" data-key="` + d + `">+` + c + `</button>
+	        <button type="button" class="btn btn-outline-danger btn-increment btn-` + d + `-down scout-co" style="margin-right: 5px;" data-key="` + d + `">-` + c + `</button>
+	        </div>
+	      </div>`
+	    );
+		}
     $('.btn-' + d + '-up').click(function () {
       var val = parseInt($('.' + d + '-co').val());
       $('.' + d + '-co').val(val + parseInt(c));
@@ -1234,11 +1250,11 @@ exports.page = function (a, b, c) {
     throw new Error('scout.init() not instantiated');
   }
 };
-exports.text = function (a, b, c, d) {
+exports.text = function (a, b, c, d, color) {
 	if (init) {
 		count++;
 		$(a).append(
-			`<p class="text-` + count + `" style="text-align: center; font-size: ` + c + `pt;">` + b + `</p>`
+			`<p class="text-` + count + `" style="text-align: center; color: `+color+`; font-size: ` + c + `pt;">` + b + `</p>`
 		);
     if (d != undefined) {
       $('.text-' + count).addClass(d);
@@ -1270,6 +1286,12 @@ exports.bluetooth = function() {
       `<a class="dropdown-item bluetooth" href="#">Bluetooth Sync</a>`
     );
   // }
+}
+exports.import = function() {
+	addSettings();
+	$(".settings-menu").append(
+		`<a class="dropdown-item import-data" href="#">Import Data</a>`
+	);
 }
 // *****************************************************************************
 // exports.concat = function (a, b) {
@@ -1573,27 +1595,29 @@ $(document).ready(function () {
     }
   });
   $('.btn-done').click(function () {
-    var reqTrue = [];
-    var i = 0;
-    do {
-      if (required.length>0) {
-        if (!json.hasOwnProperty(required[i])) {
-          new Noty({
-            text: 'Please complete all required fields.',
-            type: 'error'
-          }).show();
-          break;
-        }
-        reqTrue.push(true);
-      }
-      if (required.length==0 || reqTrue[(required.length - 1)]) {
+    // var reqTrue = [];
+    // var i = 0;
+    // do {
+    //   if (required.length>0) {
+    //     if (!json.hasOwnProperty(required[i])) {
+    //       new Noty({
+    //         text: 'Please complete all required fields.',
+    //         type: 'error'
+    //       }).show();
+    //       break;
+    //     }
+    //     reqTrue.push(true);
+    //   }
+    //   if (required.length==0 || reqTrue[(required.length - 1)]) {
         save();
-        match++;
-        fs.writeFileSync('./scouting/match.txt', match);
+				if (isStand) {
+        	match++;
+        	fs.writeFileSync('./scouting/match.txt', match);
+				}
         window.location.reload();
-      }
-      i++;
-    } while (i<required.length);
+    //   }
+    //   i++;
+    // } while (i<required.length);
   });
   $('.btn-next').click(function () {
     var page = $(this).attr('data-page');
@@ -1686,6 +1710,15 @@ $(document).ready(function () {
 	   }
   });
 // *****************************************************************************
+	$('.import-data').click(function() {
+		path = "/Volumes/1540/"
+		if (navigator.platform=="Win32") {
+			path = "K:/"
+		}
+		fs.copySync(path+"companal/output/stand-scouting","data");
+		fs.copySync(path+"companal/output/pit-scouting","pit-data");
+		fs.copySync(path+"companal/output/match-scouting","match-data");
+	});
   $('.bluetooth').click(function () {
 		if (fs.existsSync("data/manifest.json")) {
 			m = JSON.parse(fs.readFileSync("data/manifest.json"));
