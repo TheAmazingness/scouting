@@ -341,11 +341,11 @@ function scoutUpdate(data) {
 }
 
 //exports data to a flashdrive
-function exportData() {
-	if (fs.existsSync('D:/companal/output')) {
-		fs.copySync('data-collect/stand-scouting/', 'D:/companal/output/stand-scouting/');
-		fs.copySync('data-collect/pit-scouting/', 'D:/companal/output/pit-scouting/');
-		fs.copySync('data-collect/match-scouting', 'D:/companal/output/match-scouting')
+function exportData(path) {
+	if (fs.existsSync(path+'/companal/output')) {
+		fs.copySync('data-collect/stand-scouting/', path+'/companal/output/stand-scouting/');
+		fs.copySync('data-collect/pit-scouting/', path+'/companal/output/pit-scouting/');
+		fs.copySync('data-collect/match-scouting/', path+'/companal/output/match-scouting/')
 	} else {
 		new Noty({
 			text: 'Cannot find flashdrive.',
@@ -1454,7 +1454,15 @@ exports.database = function () {
 			importStand();
 		});
 		$('.export').click(function(){
-			exportData();
+			var flashpath = "/Volumes/1540";
+			if (navigator.platform=="Win32") {
+				if (fs.existsSync("K:/companal")) {
+						 flashpath = "K:";
+				} else if (fs.existsSync("D:/companal")) {
+						 flashpath = "D:";
+				}
+			}
+			exportData(flashpath);
 		});
 		$('.reload').click(function(){
 			reload();
@@ -1660,14 +1668,40 @@ $(document).ready(function () {
     window.location.reload();
   });
 // *****************************************************************************
+	$('.import-flash').click(function (){
+		var flashpath = "/Volumes/1540";
+		if (navigator.platform=="Win32") {
+			if (fs.existsSync("K:/companal")) {
+					 dirpath = "K:";
+			} else if (fs.existsSync("D:/companal")) {
+					 dirpath = "D:";
+			}
+		}
+		if (fs.existsSync(flashpath)) {
+			typs = ["stand","pit","match"]
+			for (typ in typs) {
+				t = typs[typ]
+				if (fs.existsSync(flashpath+"/companal/"+t+"-scouting/manifest.json")) {
+					var manifest = JSON.parse(fs.readFileSync(flashpath+"/companal/"+t+"-scouting/manifest.json"));
+					for (f in manifest) {
+						if (fs.existsSync(flashpath+"/companal/"+t+"-scouting/"+manifest[f])) {
+							fs.copySync(flashpath+"/companal/"+t+"-scouting/"+manifest[f],"data-collect/"+t+"-scouting/"+manifest[f]);
+						}
+					}
+				}
+			}
+		}
+	});
   $('.save-to-flash').click(function () {
   	var PSpath = "";
   	var dirpath = "";
   	if (isStand) {
   		PSpath = "stand-scouting";
-  	} else {
+  	} else if {
   		PSpath = "pit-scouting";
-  	}
+  	} else {
+			PSpath = "match-scouting"
+		}
 	  var manifest;
 	  if (fs.existsSync('data/manifest.json')) {
 		    manifest = JSON.parse(fs.readFileSync("data/manifest.json"));
