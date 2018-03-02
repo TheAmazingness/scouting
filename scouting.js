@@ -1697,7 +1697,7 @@ $(document).ready(function () {
   	var dirpath = "";
   	if (isStand) {
   		PSpath = "stand-scouting";
-  	} else if {
+  	} else if (isPit) {
   		PSpath = "pit-scouting";
   	} else {
 			PSpath = "match-scouting"
