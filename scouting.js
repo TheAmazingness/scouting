@@ -1369,6 +1369,7 @@ exports.database = function () {
 				<!--<button class='btn-warning btn pit' type='button'>Import Pit Data</button>
 				<button class='btn-warning btn stand' type='button'>Import Stand Data</button>-->
 				<button class='btn-danger btn reload' type='button'>Reload</button>
+				<button class='btn-info btn import-flash' type='button'>Import Data</button>
 				<button class='btn-success btn export' type='button'>Export Data</button>
 				<br>
 				<br>
@@ -1467,6 +1468,35 @@ exports.database = function () {
 		$('.reload').click(function(){
 			reload();
 		})
+		$('.import-flash').click(function (){
+			var flashpath = "/Volumes/1540";
+			if (navigator.platform=="Win32") {
+				if (fs.existsSync("K:/companal")) {
+						 dirpath = "K:";
+				} else if (fs.existsSync("D:/companal")) {
+						 dirpath = "D:";
+				}
+			}
+			if (fs.existsSync(flashpath)) {
+				typs = ["stand","pit","match"]
+				for (typ in typs) {
+					t = typs[typ]
+					if (fs.existsSync(flashpath+"/companal/"+t+"-scouting/manifest.json")) {
+						var manifest = JSON.parse(fs.readFileSync(flashpath+"/companal/"+t+"-scouting/manifest.json"));
+						for (f in manifest) {
+							if (fs.existsSync(flashpath+"/companal/"+t+"-scouting/"+manifest[f])) {
+								var fest = JSON.parse(fs.readFileSync("data-collect/"+t+"-scouting/manifest.json"));
+								if (fest.indexOf(manifest[f])==-1) {
+									fs.copySync(flashpath+"/companal/"+t+"-scouting/"+manifest[f],"data-collect/"+t+"-scouting/"+manifest[f]);
+									fest.push(manifest[f]);
+									fs.writeFileSync("data-collect/"+t+"-scouting/manifest.json",JSON.stringify(fest));
+								}
+							}
+						}
+					}
+				}
+			}
+		});
 		$('.members').click(function(){
 			resetTables();
 			$('#members').show();
@@ -1668,30 +1698,6 @@ $(document).ready(function () {
     window.location.reload();
   });
 // *****************************************************************************
-	$('.import-flash').click(function (){
-		var flashpath = "/Volumes/1540";
-		if (navigator.platform=="Win32") {
-			if (fs.existsSync("K:/companal")) {
-					 dirpath = "K:";
-			} else if (fs.existsSync("D:/companal")) {
-					 dirpath = "D:";
-			}
-		}
-		if (fs.existsSync(flashpath)) {
-			typs = ["stand","pit","match"]
-			for (typ in typs) {
-				t = typs[typ]
-				if (fs.existsSync(flashpath+"/companal/"+t+"-scouting/manifest.json")) {
-					var manifest = JSON.parse(fs.readFileSync(flashpath+"/companal/"+t+"-scouting/manifest.json"));
-					for (f in manifest) {
-						if (fs.existsSync(flashpath+"/companal/"+t+"-scouting/"+manifest[f])) {
-							fs.copySync(flashpath+"/companal/"+t+"-scouting/"+manifest[f],"data-collect/"+t+"-scouting/"+manifest[f]);
-						}
-					}
-				}
-			}
-		}
-	});
   $('.save-to-flash').click(function () {
   	var PSpath = "";
   	var dirpath = "";
