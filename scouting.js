@@ -295,8 +295,8 @@ function reload() {
 			var t = manifest[team]
 			if (fs.existsSync("data-collect/stand-scouting/"+t)) {
 				var data = JSON.parse(fs.readFileSync('data-collect/stand-scouting/'+t));
-				if (scoutedIDs.indexOf('#m'+data.matchNumber+data.role)==-1) {
-					scoutedIDs.push('#m'+data.matchNumber+data.role);
+				if (scoutedIDs.indexOf('#m'+data.match+data.role)==-1) {
+					scoutedIDs.push('#m'+data.match+data.role);
 				}
 				scoutUpdate(data)
 			}
@@ -342,7 +342,7 @@ function scoutUpdate(data) {
 
 //exports data to a flashdrive
 function exportData() {
-	if (fs.existsSync('/Volumes/1540/companal/output')) {
+	if (fs.existsSync('D:/companal/output')) {
 		fs.copySync('data-collect/stand-scouting/', 'D:/companal/output/stand-scouting/');
 		fs.copySync('data-collect/pit-scouting/', 'D:/companal/output/pit-scouting/');
 		fs.copySync('data-collect/match-scouting', 'D:/companal/output/match-scouting')
