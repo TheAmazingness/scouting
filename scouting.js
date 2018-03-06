@@ -1472,9 +1472,9 @@ exports.database = function () {
 			var flashpath = "/Volumes/1540";
 			if (navigator.platform=="Win32") {
 				if (fs.existsSync("K:/companal")) {
-						 dirpath = "K:";
+						 flashpath = "K:";
 				} else if (fs.existsSync("D:/companal")) {
-						 dirpath = "D:";
+						 flashpath = "D:";
 				}
 			}
 			if (fs.existsSync(flashpath)) {
@@ -1724,14 +1724,14 @@ $(document).ready(function () {
 		    }
 	  }
 	  if (fs.existsSync(dirpath)) {
-		    var array = JSON.parse(fs.readFileSync(data+"/companal/"+PSpath+"/manifest.json"));
+		    var array = JSON.parse(fs.readFileSync(dirpath+"/companal/"+PSpath+"/manifest.json"));
 		    for (x in manifest) {
-			       if (!fs.existsSync(data+"/companal/"+PSpath+"/"+manifest[x])) {
+			       if (!fs.existsSync(dirpath+"/companal/"+PSpath+"/"+manifest[x])) {
 				           array.push(manifest[x]);
-				           fs.copySync('data/'+manifest[x], data+'/companal/'+PSpath+'/'+manifest[x]);
+				           fs.copySync('data/'+manifest[x], dirpath+'/companal/'+PSpath+'/'+manifest[x]);
 			       }
 		    }
-		    fs.writeFileSync(dirpath+"/companal/"+PSpath+"/"+JSON.stringify(array));
+		    fs.writeFileSync(dirpath+"/companal/"+PSpath+"/manifest.json",JSON.stringify(array));
 		    console.log("Files saved!");
 	  } else {
 		    console.log("The flashdrive 1540 is not inputed into the tablet.");
