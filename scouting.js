@@ -342,11 +342,14 @@ function scoutUpdate(data) {
 
 function joinCycles() {
 	var allCycleData = {}
-	if (fs.existsSync("data-collect/cycle/manifest.json") && fs.existsSync("data-collect/cycle")) {
+	var repeat = [];
+	if (fs.existsSync("data-collect/cycle/manifest.json")) {
 		var cyclefest = JSON.parse(fs.readFileSync("data-collect/cycle/manifest.json"));
 		for (thing in cyclefest) {
-			if (fs.existsSync("data-collect/cycle/"+thing)) {
-				var data = JSON.parse(fs.readFileSync("data-collect/cycle-final/"+thing));
+			filename = cyclefest[thing]
+			if (fs.existsSync("data-collect/cycle/"+filename)) {
+				var data = JSON.parse(fs.readFileSync("data-collect/cycle/"+filename));
+				repeat.push(filename);
 			}
 		}
 	}
@@ -1755,10 +1758,13 @@ $(document).ready(function () {
 		if (fs.existsSync("cycle/manifest.json")) {
 			var cyclefest = JSON.parse(fs.readFileSync("cycle/manifest.json"));
 			var array = JSON.parse(fs.readFileSync(dirpath+"/companal/cycle/manifest.json"));
+			console.log(array);
 			for (cycleCool in cyclefest) {
 				if (fs.existsSync("cycle/"+cyclefest[cycleCool])) {
 					array.push(cyclefest[cycleCool]);
-					fs.copySync('cycle/'+cyclefest[cycleCool],dirpath+"/companal/cycle/"+cyclefest[cycleCool]);
+					console.log(cyclefest[cycleCool])
+					fs.writeFileSync(dirpath+"/companal/cycle/"+cyclefest[cycleCool],fs.readFileSync("cycle/"+cyclefest[cycleCool]))
+				//	fs.copySync('cycle/'+cyclefest[cycleCool],dirpath+"/companal/cycle/"+cyclefest[cycleCool]);
 				}
 			}
 			fs.writeFileSync(dirpath+"/companal/cycle/manifest.json",JSON.stringify(array));
