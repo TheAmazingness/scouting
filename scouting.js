@@ -340,12 +340,25 @@ function scoutUpdate(data) {
 	}
 }
 
-//exports data to a flashdrive
+function joinCycles() {
+	var allCycleData = {}
+	if (fs.existsSync("data-collect/cycle/manifest.json") && fs.existsSync("data-collect/cycle")) {
+		var cyclefest = JSON.parse(fs.readFileSync("data-collect/cycle/manifest.json"));
+		for (thing in cyclefest) {
+			if (fs.existsSync("data-collect/cycle/"+thing)) {
+				var data = JSON.parse(fs.readFileSync("data-collect/cycle-final/"+thing));
+			}
+		}
+	}
+}
+
+//bluetooth to flashdrive
 function exportData(path) {
 	if (fs.existsSync(path+'/companal/output')) {
 		fs.copySync('data-collect/stand-scouting/', path+'/companal/output/stand-scouting/');
 		fs.copySync('data-collect/pit-scouting/', path+'/companal/output/pit-scouting/');
-		fs.copySync('data-collect/match-scouting/', path+'/companal/output/match-scouting/')
+		fs.copySync('data-collect/match-scouting/', path+'/companal/output/match-scouting/');
+		fs.copySync('data-collect/cycle-final/', path+'/companal/output/cycle');
 	} else {
 		new Noty({
 			text: 'Cannot find flashdrive.',
@@ -1318,7 +1331,7 @@ exports.import = function() {
 // };
 // *****************************************************************************
 exports.database = function () {
-	execAsync("C:/Python27/python.exe node_modules/scouting/Windows_Bluetooth_Server.py") //runs the server bluetooth code
+//	execAsync("C:/Python27/python.exe node_modules/scouting/Windows_Bluetooth_Server.py") //runs the server bluetooth code
 	importScouts();
 	importSchedule();
 	setExemptions(exemptionReq);
@@ -1455,6 +1468,7 @@ exports.database = function () {
 			importStand();
 		});
 		$('.export').click(function(){
+			joinCycles()
 			var flashpath = "/Volumes/1540";
 			if (navigator.platform=="Win32") {
 				if (fs.existsSync("K:/companal")) {
@@ -1468,6 +1482,7 @@ exports.database = function () {
 		$('.reload').click(function(){
 			reload();
 		})
+		//Flashdrive to Database
 		$('.import-flash').click(function (){
 			var flashpath = "/Volumes/1540";
 			if (navigator.platform=="Win32") {
@@ -1478,18 +1493,18 @@ exports.database = function () {
 				}
 			}
 			if (fs.existsSync(flashpath)) {
-				typs = ["stand","pit","match"]
+				typs = ["stand-scouting","pit-scouting","match-scouting","cycle"]
 				for (typ in typs) {
 					t = typs[typ]
-					if (fs.existsSync(flashpath+"/companal/"+t+"-scouting/manifest.json")) {
-						var manifest = JSON.parse(fs.readFileSync(flashpath+"/companal/"+t+"-scouting/manifest.json"));
+					if (fs.existsSync(flashpath+"/companal/"+t+"/manifest.json")) {
+						var manifest = JSON.parse(fs.readFileSync(flashpath+"/companal/"+t+"/manifest.json"));
 						for (f in manifest) {
-							if (fs.existsSync(flashpath+"/companal/"+t+"-scouting/"+manifest[f])) {
-								var fest = JSON.parse(fs.readFileSync("data-collect/"+t+"-scouting/manifest.json"));
+							if (fs.existsSync(flashpath+"/companal/"+t+"/"+manifest[f])) {
+								var fest = JSON.parse(fs.readFileSync("data-collect/"+t+"/manifest.json"));
 								if (fest.indexOf(manifest[f])==-1) {
-									fs.copySync(flashpath+"/companal/"+t+"-scouting/"+manifest[f],"data-collect/"+t+"-scouting/"+manifest[f]);
+									fs.copySync(flashpath+"/companal/"+t+"/"+manifest[f],"data-collect/"+t+"/"+manifest[f]);
 									fest.push(manifest[f]);
-									fs.writeFileSync("data-collect/"+t+"-scouting/manifest.json",JSON.stringify(fest));
+									fs.writeFileSync("data-collect/"+t+"/manifest.json",JSON.stringify(fest));
 								}
 							}
 						}
@@ -1698,6 +1713,7 @@ $(document).ready(function () {
     window.location.reload();
   });
 // *****************************************************************************
+// Stand to Flash
   $('.save-to-flash').click(function () {
   	var PSpath = "";
   	var dirpath = "";
@@ -1736,6 +1752,17 @@ $(document).ready(function () {
 	  } else {
 		    console.log("The flashdrive 1540 is not inputed into the tablet.");
 	  }
+		if (fs.existsSync("cycle/manifest.json")) {
+			var cyclefest = JSON.parse(fs.readFileSync("cycle/manifest.json"));
+			var array = JSON.parse(fs.readFileSync(dirpath+"/companal/cycle/manifest.json"));
+			for (cycleCool in cyclefest) {
+				if (fs.existsSync("cycle/"+cyclefest[cycleCool])) {
+					array.push(cyclefest[cycleCool]);
+					fs.copySync('cycle/'+cyclefest[cycleCool],dirpath+"/companal/cycle/"+cyclefest[cycleCool]);
+				}
+			}
+			fs.writeFileSync(dirpath+"/companal/cycle/manifest.json",JSON.stringify(array));
+		}
   });
   // *****************************************************************************
   $('.update').click(function () {
@@ -1750,6 +1777,7 @@ $(document).ready(function () {
 	   }
   });
 // *****************************************************************************
+//Flashdrive to Analysis/Coach
 	$('.import-data').click(function() {
 		path = "/Volumes/1540/"
 		if (navigator.platform=="Win32") {
@@ -1762,6 +1790,7 @@ $(document).ready(function () {
 		fs.copySync(path+"companal/output/stand-scouting","data");
 		fs.copySync(path+"companal/output/pit-scouting","pit-data");
 		fs.copySync(path+"companal/output/match-scouting","match-data");
+		fs.copySync(path+"companal/output/cycle","cycle")
 	});
   $('.bluetooth').click(function () {
 		if (fs.existsSync("data/manifest.json")) {
