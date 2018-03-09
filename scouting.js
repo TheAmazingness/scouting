@@ -347,11 +347,47 @@ function joinCycles() {
 		var cyclefest = JSON.parse(fs.readFileSync("data-collect/cycle/manifest.json"));
 		for (thing in cyclefest) {
 			filename = cyclefest[thing]
-			if (fs.existsSync("data-collect/cycle/"+filename)) {
+			if (fs.existsSync("data-collect/cycle/"+filename) && repeat.indexOf(filename)==-1) {
 				var data = JSON.parse(fs.readFileSync("data-collect/cycle/"+filename));
 				repeat.push(filename);
+				var keys = Object.keys(allCycleData);
+				var filenameshort = filename.slice(0,-11);
+				if (keys.indexOf(filenameshort)!=-1) {
+					var total = allCycleData[filenameshort]
+					var redAlliance = false
+					if (filename.indexOf("r")>=0) {
+						redAlliance = true
+					}
+					if (redAlliance) {
+						data["hswitch"]=data["redswitch"]
+						data["oswitch"]=data["blueswitch"]
+					} else {
+						data["hswitch"]=data["blueswitch"]
+						data["oswitch"]=data["redswitch"]
+					}
+					var dataKeys = Object.keys(data)
+					console.log(dataKeys)
+					for (a in dataKeys) {
+						attribute = dataKeys[a]
+						if (Object.keys(total).indexOf(attribute)!=-1) {
+							if (typeof(data[attribute])=='object') {
+								data[attribute] = total[attribute].concat(data[attribute]);
+							}
+						} else {
+							total[attribute] = data[attribute]
+						}
+					}
+				} else {
+					allCycleData[filenameshort] = data;
+				}
 			}
 		}
+		var keys = Object.keys(allCycleData);
+		for (team in keys) {
+			fs.writeFileSync("data-collect/cycle-final/"+keys[team]+"-cycle.json", JSON.stringify(allCycleData[keys[team]]));
+			keys[team] += "-cycle.json"
+		}
+		fs.writeFileSync("data-collect/cycle-final/manifest.json",JSON.stringify(keys));
 	}
 }
 
