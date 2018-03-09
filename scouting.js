@@ -1829,10 +1829,12 @@ $(document).ready(function () {
 				path = "K:/"
 			}
 		}
-		fs.copySync(path+"companal/output/stand-scouting","data");
-		fs.copySync(path+"companal/output/pit-scouting","pit-data");
-		fs.copySync(path+"companal/output/match-scouting","match-data");
-		fs.copySync(path+"companal/output/cycle","cycle")
+		if (fs.existsSync(path+"companal/output")) {
+			fs.copySync(path+"companal/output/stand-scouting","data");
+			fs.copySync(path+"companal/output/pit-scouting","pit-data");
+			fs.copySync(path+"companal/output/match-scouting","match-data");
+			fs.copySync(path+"companal/output/cycle","cycle")
+		}
 	});
   $('.bluetooth').click(function () {
 		if (fs.existsSync("data/manifest.json")) {
