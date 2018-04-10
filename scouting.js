@@ -1781,10 +1781,10 @@ $(document).ready(function () {
 	  if (fs.existsSync(dirpath)) {
 		    var array = JSON.parse(fs.readFileSync(dirpath+"/companal/"+PSpath+"/manifest.json"));
 		    for (x in manifest) {
-			       if (!fs.existsSync(dirpath+"/companal/"+PSpath+"/"+manifest[x])) {
-				           array.push(manifest[x]);
-				           fs.copySync('data/'+manifest[x], dirpath+'/companal/'+PSpath+'/'+manifest[x]);
-			       }
+					if (!fs.existsSync(dirpath+"/companal/"+PSpath+"/"+manifest[x])) {
+								array.push(manifest[x]);
+					}
+					fs.copySync('data/'+manifest[x], dirpath+'/companal/'+PSpath+'/'+manifest[x]);
 		    }
 		    fs.writeFileSync(dirpath+"/companal/"+PSpath+"/manifest.json",JSON.stringify(array));
 		    console.log("Files saved!");
