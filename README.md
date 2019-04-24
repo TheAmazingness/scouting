@@ -1,3 +1,5 @@
+# This project is now deprecated and not supported. Click [here](https://github.com/TheAmazingness/scoutkit) to see the new FRC scouter, ScoutKit.
+
 # For FRC Team 1540 The Flaming Chickens (http://www.team1540.org) scouting
 ## Start Here:
 > This is a Node.js module intended to work with Electron.
