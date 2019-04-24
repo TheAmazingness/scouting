@@ -340,12 +340,64 @@ function scoutUpdate(data) {
 	}
 }
 
-//exports data to a flashdrive
-function exportData() {
-	if (fs.existsSync('D:/companal/output')) {
-		fs.copySync('data-collect/stand-scouting/', 'D:/companal/output/stand-scouting/');
-		fs.copySync('data-collect/pit-scouting/', 'D:/companal/output/pit-scouting/');
-		fs.copySync('data-collect/match-scouting', 'D:/companal/output/match-scouting')
+function joinCycles() {
+	var allCycleData = {}
+	var repeat = [];
+	if (fs.existsSync("data-collect/cycle/manifest.json")) {
+		var cyclefest = JSON.parse(fs.readFileSync("data-collect/cycle/manifest.json"));
+		for (thing in cyclefest) {
+			filename = cyclefest[thing]
+			if (fs.existsSync("data-collect/cycle/"+filename) && repeat.indexOf(filename)==-1) {
+				var data = JSON.parse(fs.readFileSync("data-collect/cycle/"+filename));
+				repeat.push(filename);
+				var keys = Object.keys(allCycleData);
+				var filenameshort = filename.slice(0,-11);
+				if (keys.indexOf(filenameshort)!=-1) {
+					var total = allCycleData[filenameshort]
+					var redAlliance = false
+					if (filename.indexOf("r")>=0) {
+						redAlliance = true
+					}
+					if (redAlliance) {
+						data["hswitch"]=data["redswitch"]
+						data["oswitch"]=data["blueswitch"]
+					} else {
+						data["hswitch"]=data["blueswitch"]
+						data["oswitch"]=data["redswitch"]
+					}
+					var dataKeys = Object.keys(data)
+					console.log(dataKeys)
+					for (a in dataKeys) {
+						attribute = dataKeys[a]
+						if (Object.keys(total).indexOf(attribute)!=-1) {
+							if (typeof(data[attribute])=='object') {
+								data[attribute] = total[attribute].concat(data[attribute]);
+							}
+						} else {
+							total[attribute] = data[attribute]
+						}
+					}
+				} else {
+					allCycleData[filenameshort] = data;
+				}
+			}
+		}
+		var keys = Object.keys(allCycleData);
+		for (team in keys) {
+			fs.writeFileSync("data-collect/cycle-final/"+keys[team]+"-cycle.json", JSON.stringify(allCycleData[keys[team]]));
+			keys[team] += "-cycle.json"
+		}
+		fs.writeFileSync("data-collect/cycle-final/manifest.json",JSON.stringify(keys));
+	}
+}
+
+//bluetooth to flashdrive
+function exportData(path) {
+	if (fs.existsSync(path+'/companal/output')) {
+		fs.copySync('data-collect/stand-scouting/', path+'/companal/output/stand-scouting/');
+		fs.copySync('data-collect/pit-scouting/', path+'/companal/output/pit-scouting/');
+		fs.copySync('data-collect/match-scouting/', path+'/companal/output/match-scouting/');
+		fs.copySync('data-collect/cycle-final/', path+'/companal/output/cycle');
 	} else {
 		new Noty({
 			text: 'Cannot find flashdrive.',
@@ -1318,7 +1370,7 @@ exports.import = function() {
 // };
 // *****************************************************************************
 exports.database = function () {
-	execAsync("C:/Python27/python.exe node_modules/scouting/Windows_Bluetooth_Server.py") //runs the server bluetooth code
+//	execAsync("C:/Python27/python.exe node_modules/scouting/Windows_Bluetooth_Server.py") //runs the server bluetooth code
 	importScouts();
 	importSchedule();
 	setExemptions(exemptionReq);
@@ -1369,6 +1421,7 @@ exports.database = function () {
 				<!--<button class='btn-warning btn pit' type='button'>Import Pit Data</button>
 				<button class='btn-warning btn stand' type='button'>Import Stand Data</button>-->
 				<button class='btn-danger btn reload' type='button'>Reload</button>
+				<button class='btn-info btn import-flash' type='button'>Import Data</button>
 				<button class='btn-success btn export' type='button'>Export Data</button>
 				<br>
 				<br>
@@ -1454,11 +1507,50 @@ exports.database = function () {
 			importStand();
 		});
 		$('.export').click(function(){
-			exportData();
+			joinCycles()
+			var flashpath = "/Volumes/1540";
+			if (navigator.platform=="Win32") {
+				if (fs.existsSync("K:/companal")) {
+						 flashpath = "K:";
+				} else if (fs.existsSync("D:/companal")) {
+						 flashpath = "D:";
+				}
+			}
+			exportData(flashpath);
 		});
 		$('.reload').click(function(){
 			reload();
 		})
+		//Flashdrive to Database
+		$('.import-flash').click(function (){
+			var flashpath = "/Volumes/1540";
+			if (navigator.platform=="Win32") {
+				if (fs.existsSync("K:/companal")) {
+						 flashpath = "K:";
+				} else if (fs.existsSync("D:/companal")) {
+						 flashpath = "D:";
+				}
+			}
+			if (fs.existsSync(flashpath)) {
+				typs = ["stand-scouting","pit-scouting","match-scouting","cycle"]
+				for (typ in typs) {
+					t = typs[typ]
+					if (fs.existsSync(flashpath+"/companal/"+t+"/manifest.json")) {
+						var manifest = JSON.parse(fs.readFileSync(flashpath+"/companal/"+t+"/manifest.json"));
+						for (f in manifest) {
+							if (fs.existsSync(flashpath+"/companal/"+t+"/"+manifest[f])) {
+								var fest = JSON.parse(fs.readFileSync("data-collect/"+t+"/manifest.json"));
+								if (fest.indexOf(manifest[f])==-1) {
+									fs.copySync(flashpath+"/companal/"+t+"/"+manifest[f],"data-collect/"+t+"/"+manifest[f]);
+									fest.push(manifest[f]);
+									fs.writeFileSync("data-collect/"+t+"/manifest.json",JSON.stringify(fest));
+								}
+							}
+						}
+					}
+				}
+			}
+		});
 		$('.members').click(function(){
 			resetTables();
 			$('#members').show();
@@ -1660,14 +1752,17 @@ $(document).ready(function () {
     window.location.reload();
   });
 // *****************************************************************************
+// Stand to Flash
   $('.save-to-flash').click(function () {
   	var PSpath = "";
   	var dirpath = "";
   	if (isStand) {
   		PSpath = "stand-scouting";
-  	} else {
+  	} else if (isPit) {
   		PSpath = "pit-scouting";
-  	}
+  	} else {
+			PSpath = "match-scouting"
+		}
 	  var manifest;
 	  if (fs.existsSync('data/manifest.json')) {
 		    manifest = JSON.parse(fs.readFileSync("data/manifest.json"));
@@ -1684,18 +1779,32 @@ $(document).ready(function () {
 		    }
 	  }
 	  if (fs.existsSync(dirpath)) {
-		    var array = JSON.parse(fs.readFileSync(data+"/companal/"+PSpath+"/manifest.json"));
+		    var array = JSON.parse(fs.readFileSync(dirpath+"/companal/"+PSpath+"/manifest.json"));
 		    for (x in manifest) {
-			       if (!fs.existsSync(data+"/companal/"+PSpath+"/"+manifest[x])) {
-				           array.push(manifest[x]);
-				           fs.copySync('data/'+manifest[x], data+'/companal/'+PSpath+'/'+manifest[x]);
-			       }
+					if (!fs.existsSync(dirpath+"/companal/"+PSpath+"/"+manifest[x])) {
+								array.push(manifest[x]);
+					}
+					fs.copySync('data/'+manifest[x], dirpath+'/companal/'+PSpath+'/'+manifest[x]);
 		    }
-		    fs.writeFileSync(dirpath+"/companal/"+PSpath+"/"+JSON.stringify(array));
+		    fs.writeFileSync(dirpath+"/companal/"+PSpath+"/manifest.json",JSON.stringify(array));
 		    console.log("Files saved!");
 	  } else {
 		    console.log("The flashdrive 1540 is not inputed into the tablet.");
 	  }
+		if (fs.existsSync("cycle/manifest.json")) {
+			var cyclefest = JSON.parse(fs.readFileSync("cycle/manifest.json"));
+			var array = JSON.parse(fs.readFileSync(dirpath+"/companal/cycle/manifest.json"));
+			console.log(array);
+			for (cycleCool in cyclefest) {
+				if (fs.existsSync("cycle/"+cyclefest[cycleCool])) {
+					array.push(cyclefest[cycleCool]);
+					console.log(cyclefest[cycleCool])
+					fs.writeFileSync(dirpath+"/companal/cycle/"+cyclefest[cycleCool],fs.readFileSync("cycle/"+cyclefest[cycleCool]))
+				//	fs.copySync('cycle/'+cyclefest[cycleCool],dirpath+"/companal/cycle/"+cyclefest[cycleCool]);
+				}
+			}
+			fs.writeFileSync(dirpath+"/companal/cycle/manifest.json",JSON.stringify(array));
+		}
   });
   // *****************************************************************************
   $('.update').click(function () {
@@ -1710,6 +1819,7 @@ $(document).ready(function () {
 	   }
   });
 // *****************************************************************************
+//Flashdrive to Analysis/Coach
 	$('.import-data').click(function() {
 		path = "/Volumes/1540/"
 		if (navigator.platform=="Win32") {
@@ -1719,9 +1829,12 @@ $(document).ready(function () {
 				path = "K:/"
 			}
 		}
-		fs.copySync(path+"companal/output/stand-scouting","data");
-		fs.copySync(path+"companal/output/pit-scouting","pit-data");
-		fs.copySync(path+"companal/output/match-scouting","match-data");
+		if (fs.existsSync(path+"companal/output")) {
+			fs.copySync(path+"companal/output/stand-scouting","data");
+			fs.copySync(path+"companal/output/pit-scouting","pit-data");
+			fs.copySync(path+"companal/output/match-scouting","match-data");
+			fs.copySync(path+"companal/output/cycle","cycle")
+		}
 	});
   $('.bluetooth').click(function () {
 		if (fs.existsSync("data/manifest.json")) {
